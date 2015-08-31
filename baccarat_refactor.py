@@ -2,13 +2,6 @@
 from random import randint
 
 
-def roll():
-    n = randint(0, 1)
-    if n == 1:
-        return 'player'
-    else:
-        return 'bank'
-
 class Game():
     def __init__(self):
         self.gamblers = []
@@ -21,41 +14,47 @@ class Game():
         else:
             return 'bank'
 
-    def register(gamblers):  # player objects
-        self.gamblers = []
-        self.outcome = None
+    def register(self, gamblers):  # player objects
         self.gamblers = gamblers
-        self.play()
-        self.update()
+        self.run()
 
-    def play():
-        self.outcome = self.roll()
-
-    def update():
-        assert self.outcome is not None
-        
+    def run(self):
         for gambler in self.gamblers:
-            if gambler.bet == self.outcome:
-                gambler.update('win')
+            # gambler.play()
+        self.outcome = self.roll()
+        self.notify_observers()
+
+    def notify_observers(self):
+        assert self.outcome is not None
+
+        for gambler in self.gamblers:
+            if gambler.bet_choice == self.outcome:
+                gambler.update(outcome = 'win', reward = 0)
             else:
-                gambler.update('loss')
+                gambler.update(outcome = 'loss')
 
 
 class BaseStrategy():
-    def __init__(self):
-        #           0  1  2  3  4  5  6   7   8   9
-        # self.row = [2, 2, 2, 4, 4, 8, 12, 20, 32, 52]
-        self.row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
-        self.i = 0  # row index position
+    def __init__(self, coefficient = 1):
+        base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
+        self.c = coefficient
+        self.row = [i*c for i in base_row]
+        self.i = 0
         self.double_up = False
-        self.last_index = -1  # ??
+        self.outcome = 'loss'
         self.level = 1
         self.level_target = 0 # drop to lower level after this gets to (sum(self.row) * level ) / 2
 
+    def update(self, outcome, reward = None):
+        self.outcome = outcome
+        if reward:
+            self.level_target += reward
+            self.update_level()
 
+            
     def update_level(self, increase = False):
         if increase:
-            self.level += 1 
+            self.level += 1
             self.level_target = 0
         elif self.level_target >= ((sum(self.row) * (2 ** (self.level - 1))) / 2):
             self.level -= 1
@@ -83,13 +82,9 @@ class BaseStrategy():
         assert 0 <= self.i < len(self.row)
 
 
-
-
     def is_double(self):
         # self.double_up is going to be used in THIS play
-
-        if (self.i <= 2 or self.i == 4) and self.last_index == self.i and self.double_up == False:
-            # if self.last_index == self.i and self.double_up == False:  # if double_up was False till now
+        if (self.i <= 2 or self.i == 4) and self.outcome == 'win' and self.double_up == False:
                 self.double_up = True
         elif self.double_up == True:  # if double_up was True till now
                 self.double_up = False
@@ -97,44 +92,48 @@ class BaseStrategy():
 
     def get_bet_size(self):  # res - result
         bet = 0
-        self.is_double()
         level_multiplier = 2 ** (self.level - 1)
+
         if self.double_up:
-            bet = self.row[self.i] * level_multiplier * 2  # or make double_up int (1 or 2) and multiply by it
+            bet = self.row[self.i] * level_multiplier * 2  # or make double_up int and multiply by it
         else:
             bet = self.row[self.i] * level_multiplier
 
-        self.last_index = self.i
         assert bet > 0
+        self.level_target -= bet
         return bet
+
+    def get_bet_choice(self):
+        return 'player'
 
 
 
 class Player():
     def __init__(self, strategy):
         self.strategy = strategy
-        self.net = 0
+        self.bet_size = None
+        self.bet_choice = None
+        self.statistics = {'net' : 0, 'won' : 0, 'lost' : 0, 'largest_bet' : 0}
         self.res = 'l'
-        self.won = 0
-        self.lost = 0
-        self.largest_bet = 0
+
+    def update (self, outcome, reward = None):
+        self.strategy.update(outcome)
+        self.res = outcome
+
+        if reward:
+            self.statistics['won'] += 1
+            assert reward is not None
+            self.net += reward
+        else:
+            self.statistics['lost'] += 1
 
     def bet (self, amount):
-        if amount > self.largest_bet:
-            self.largest_bet = amount
-        self.net -= amount
-        self.strategy.level_target -= amount
+        if amount > self.statistics['largest_bet']
+            self.statistics['largest_bet'] = amount
 
-        outcome = roll()
-        if outcome == 'p':
-            self.res = 'w'
-            self.net += 2 * amount
-            self.won += 1
-            self.strategy.level_target += 2 * amount
-            self.strategy.update_level()
-        else:
-            self.res = 'l'
-            self.lost += 1
+        self.statistics['net'] -= amount
+        self.strategy.level_target -= amount  # move to strategy
+
 
         print('{:>3} {:>6} {:>4} {:>3} {:>3} {:>6}'.format(
                         self.strategy.i,
@@ -144,19 +143,17 @@ class Player():
                         self.res,
                         self.net))
 
-        self.strategy.update_index(self.res)
-
-
-    def play(self, num_hands):
-        for i in range(num_hands):
-            bet_amount = self.strategy.get_bet_size()
-            self.bet(bet_amount)
+    def play(self):
+        self.bet_size = self.strategy.get_bet_size()
+        self.bet_choice = self.strategy.get_bet_choice()
+        self.bet(self.bet_size, self.bet_choice)
             
 
             
 
 strat = BaseStrategy()
 p1 = Player(strat)
+
 
 print('{:>3} {:>6} {:>4} {:>3} {:>3} {:>6}'.format(
                 'i',
@@ -165,7 +162,7 @@ print('{:>3} {:>6} {:>4} {:>3} {:>3} {:>6}'.format(
                 'level',
                 'res',
                 'net'))
-p1.play(1000000)
+
 
 
 print('Statistics:')
