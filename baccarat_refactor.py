@@ -15,6 +15,7 @@ def print_header():
         'res',
         'net'))
 
+
 def roll():
     n = randint(0, 1)  # player : bank ratio is not exactly 50:50!
     if n == 1:
@@ -24,23 +25,30 @@ def roll():
 
 
 class Game():
-    def __init__(self, store_data = False):
+    def __init__(self, store_data=False):
         self.gamblers = []
         self.outcome = None
         self.store_data = store_data
         if store_data:
             self.wb_created = False
+            self.wb = Workbook()
+            self.ws = self.wb.active
 
     def create_spreadsheet(self):
-        self.wb = Workbook()
-        self.ws = self.wb.active
         self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
         self.ws['A1'] = 'Casino'
-        for i in range(len(self.gamblers)):
-            self.ws.merge_cells(start_row=1, start_column=3+(4*i), end_row=1, end_column=6+(4*i))
-            c = self.ws.cell(row=1, column=3+(4*i))
-            c.value = self.gamblers[i].name
-            self.wb.save('test.xlsx')
+        for j in range(len(self.gamblers)):
+            self.ws.merge_cells(start_row=1, start_column=3+(4*j), end_row=1, end_column=6+(4*j))
+            c = self.ws.cell(row=1, column=3+(4*j))
+            c.value = self.gamblers[j].name
+
+        columns = ['play', 'bet', 'outcome', 'net']
+        row_list = [column for x in range(len(self.gamblers)) for column in columns]
+        row_list.insert(0, 'outcome')
+        row_list.insert(0, 'game')
+        print(row_list)
+        self.ws.append(row_list)
+        self.wb.save('test.xlsx')
 
     @staticmethod
     def roll():
@@ -97,7 +105,6 @@ class Game():
             self.wb_created = True
 
 
-
 class BaseStrategy():
     def __init__(self, coefficient=1):
         base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
@@ -107,7 +114,7 @@ class BaseStrategy():
         self.double_up = False
         self.outcome = 'loss'
         self.level = 1
-        self.level_target = 0  # drop to lower level after this gets to (sum(self.row) * level ) / 2
+        self.level_target = 0  # drop to lower leve l after this gets to (sum(self.row) * level ) / 2
         self.last_index = 0
 
     def update(self, outcome, reward=None):
@@ -170,7 +177,8 @@ class BaseStrategy():
 
         return bet
 
-    def get_bet_choice(self):
+    @staticmethod
+    def get_bet_choice():
         choice = roll()
         return choice
 
@@ -222,8 +230,6 @@ class Player():
         assert self.bet_choice is not None
 
         self.bet(self.bet_size)  # this can actually be called without arguments
-
-
 
 
 strat1 = BaseStrategy()
