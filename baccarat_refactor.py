@@ -34,21 +34,7 @@ class Game():
             self.wb = Workbook()
             self.ws = self.wb.active
 
-    def create_spreadsheet(self):
-        self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
-        self.ws['A1'] = 'Casino'
-        for j in range(len(self.gamblers)):
-            self.ws.merge_cells(start_row=1, start_column=3+(4*j), end_row=1, end_column=6+(4*j))
-            c = self.ws.cell(row=1, column=3+(4*j))
-            c.value = self.gamblers[j].name
 
-        columns = ['play', 'bet', 'outcome', 'net']
-        row_list = [column for x in range(len(self.gamblers)) for column in columns]
-        row_list.insert(0, 'outcome')
-        row_list.insert(0, 'game')
-        print(row_list)
-        self.ws.append(row_list)
-        self.wb.save('test.xlsx')
 
     @staticmethod
     def roll():
@@ -98,6 +84,22 @@ class Game():
         traces.append(total_trace)
         data = Data(traces)
         unique_url = py.plot(data, filename='graph')
+
+    def create_spreadsheet(self):
+        self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
+        self.ws['A1'] = 'Casino'
+        for j in range(len(self.gamblers)):
+            self.ws.merge_cells(start_row=1, start_column=3+(4*j), end_row=1, end_column=6+(4*j))
+            c = self.ws.cell(row=1, column=3+(4*j))
+            c.value = self.gamblers[j].name
+
+        columns = ['play', 'bet', 'outcome', 'net']
+        row_list = [column for x in range(len(self.gamblers)) for column in columns]
+        row_list.insert(0, 'outcome')
+        row_list.insert(0, 'game')
+        print(row_list)
+        self.ws.append(row_list)
+        self.wb.save('test.xlsx')
 
     def write_xl(self):
         if not self.wb_created:
