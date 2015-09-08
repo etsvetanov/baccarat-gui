@@ -1,9 +1,9 @@
 import plotly.plotly as py
-import plotly.tools as tls
 
-from plotly.graph_objs import *
+from plotly.graph_objs import Scatter, Data
 from random import randint
 from openpyxl import Workbook
+from openpyxl.styles import PatternFill
 
 
 def print_header():
@@ -33,7 +33,6 @@ class Game():
             self.wb_created = False
             self.wb = Workbook()
             self.ws = self.wb.active
-
 
 
     @staticmethod
@@ -68,6 +67,8 @@ class Game():
             else:
                 gambler.update(outcome='loss')
 
+        self.write_xl()
+
     def plotz(self):
         py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
         traces = []
@@ -89,8 +90,8 @@ class Game():
         self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
         self.ws['A1'] = 'Casino'
         for j in range(len(self.gamblers)):
-            self.ws.merge_cells(start_row=1, start_column=3+(4*j), end_row=1, end_column=6+(4*j))
-            c = self.ws.cell(row=1, column=3+(4*j))
+            self.ws.merge_cells(start_row=1, start_column=3 + (4 * j), end_row=1, end_column=6 + (4 * j))
+            c = self.ws.cell(row=1, column=3 + (4 * j))
             c.value = self.gamblers[j].name
 
         columns = ['play', 'bet', 'outcome', 'net']
@@ -105,6 +106,18 @@ class Game():
         if not self.wb_created:
             self.create_spreadsheet()
             self.wb_created = True
+        # if the position of gamblers in the list changes it will mess up the excel
+        # consider providing some logic to the positioning
+        row_list = [item for gambler in self.gamblers for item in [gambler.bet_choice, gambler.bet_size,
+                                                            'WIN' if gambler.bet_choice == self.outcome else 'LOSS',
+                                                            gambler.statistics['net']]]
+        row_list.insert(0, self.outcome)
+        row_list.insert(0, 'x')
+        self.ws.append(row_list)
+        for i in range(len(self.gamblers) + 1):
+            cell = self.ws.cell(row=len(self.ws.rows), column=2 + (4 * i))
+            cell.fill = PatternFill(patternType='solid', start_color='FFD8E4BC')
+        self.wb.save('test.xlsx')
 
 
 class BaseStrategy():
@@ -236,17 +249,17 @@ class Player():
 
 strat1 = BaseStrategy()
 strat2 = BaseStrategy()
-p1 = Player(strategy=strat1, name='p1')
-p2 = Player(strategy=strat2, name='p2')
+p1 = Player(strategy=strat1, name='P1')
+p2 = Player(strategy=strat2, name='P2')
 table = Game(store_data=True)
 players = [p1, p2]
 
 print_header()
 
-for i in range(10):
+for num in range(10):
     table.register(players)
 table.plotz()
-table.write_xl()
+
 
 print('Statistics:')
 print('plays won:   ', p1.statistics['won'])
