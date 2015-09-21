@@ -4,6 +4,7 @@ from plotly.graph_objs import Scatter, Data
 from random import randint
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
+from .collector import Collector
 
 
 def print_header():
@@ -33,7 +34,6 @@ class Game():
             self.wb_created = False
             self.wb = Workbook()
             self.ws = self.wb.active
-
 
     @staticmethod
     def roll():
@@ -67,6 +67,10 @@ class Game():
             else:
                 gambler.update(outcome='loss')
 
+        # if you write data to the spreadsheet before you update
+        # net won't be calculated
+        # maybe find a way to calc net then write data then
+        # do the rest of the strategy update process? !?!!!
         self.write_xl()
 
     def plotz(self):
@@ -89,35 +93,46 @@ class Game():
     def create_spreadsheet(self):
         self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
         self.ws['A1'] = 'Casino'
+        columns = ['play', 'level', 'index', 'bet', 'outcome', 'net']
+        l = len(columns)
         for j in range(len(self.gamblers)):
-            self.ws.merge_cells(start_row=1, start_column=3 + (4 * j), end_row=1, end_column=6 + (4 * j))
-            c = self.ws.cell(row=1, column=3 + (4 * j))
+            self.ws.merge_cells(start_row=1, start_column=3 + (l * j), end_row=1, end_column=7 + (l * j))
+            c = self.ws.cell(row=1, column=3 + (l * j))
             c.value = self.gamblers[j].name
 
-        columns = ['play', 'bet', 'outcome', 'net']
         row_list = [column for x in range(len(self.gamblers)) for column in columns]
         row_list.insert(0, 'outcome')
         row_list.insert(0, 'game')
-        print(row_list)
         self.ws.append(row_list)
         self.wb.save('test.xlsx')
 
     def write_xl(self):
+        # another way to write data to the spreadsheet is to move the 'writing' logic away from
+        # the Game object and have each player or strategy 'submit' data to a special object
+        # that collects data
         if not self.wb_created:
             self.create_spreadsheet()
             self.wb_created = True
         # if the position of gamblers in the list changes it will mess up the excel
         # consider providing some logic to the positioning
-        row_list = [item for gambler in self.gamblers for item in [gambler.bet_choice, gambler.bet_size,
-                                                            'WIN' if gambler.bet_choice == self.outcome else 'LOSS',
-                                                            gambler.statistics['net']]]
+
+        row_list = [item for gambler
+                    in self.gamblers
+                    for item in
+                    [gambler.bet_choice,
+                     gambler.strategy.level,
+                     gambler.strategy.last_index,
+                     gambler.bet_size,
+                     'WIN' if gambler.bet_choice == self.outcome else 'LOSS',
+                     gambler.statistics['net']]]
+
         row_list.insert(0, self.outcome)
         row_list.insert(0, 'x')
         self.ws.append(row_list)
         for i in range(len(self.gamblers) + 1):
-            cell = self.ws.cell(row=len(self.ws.rows), column=2 + (4 * i))
+            cell = self.ws.cell(row=len(self.ws.rows), column=2 + (6 * i))
             cell.fill = PatternFill(patternType='solid', start_color='FFD8E4BC')
-        self.wb.save('test.xlsx')
+        # self.wb.save('test.xlsx')
 
 
 class BaseStrategy():
@@ -129,7 +144,7 @@ class BaseStrategy():
         self.double_up = False
         self.outcome = 'loss'
         self.level = 1
-        self.level_target = 0  # drop to lower leve l after this gets to (sum(self.row) * level ) / 2
+        self.level_target = 0  # drop to lower level after this gets to (sum(self.row) * level ) / 2
         self.last_index = 0
 
     def update(self, outcome, reward=None):
@@ -142,6 +157,11 @@ class BaseStrategy():
             self.update_level()
 
     def update_level(self, increase=False):
+        """
+        you can go to a higher level if you loose the last bet in the row
+        or you can go to a lower level if you win a amount equal to the
+        sum of the bets in the previous level row
+        """
         if increase:
             self.level += 1
             self.level_target = 0
@@ -179,7 +199,6 @@ class BaseStrategy():
             self.double_up = False
 
     def get_bet_size(self):  # res - result
-        bet = 0
         level_multiplier = 2 ** (self.level - 1)
 
         if self.double_up:
@@ -198,8 +217,31 @@ class BaseStrategy():
         return choice
 
 
+class PairStrategy(BaseStrategy):
+    def __init__(self, coefficient=1):
+        self.lead = False
+        BaseStrategy.__init__(self, coefficient)
+        self.pair = None
+
+    def set_pair(self, pair):
+        self.pair = pair
+
+    def get_bet_choice(self):
+        if self.pair.strategy.lead:
+            self.pair.strategy.lead = False
+            if self.pair.bet_choice == 'player':
+                return 'bank'
+            else:
+                return 'player'
+        else:
+            self.lead = True
+            choice = roll()
+            return choice
+
+
 class Player():
-    def __init__(self, strategy, name):
+    def __init__(self, strategy, name, cltr=None):
+        self.cltr = cltr
         self.name = name
         self.strategy = strategy
         self.bet_size = None
@@ -217,15 +259,22 @@ class Player():
             self.res,
             self.statistics['net']))
 
+    def submit_data(self):
+        data = [self.bet_choice, self.strategy.level, self.strategy.i, self.bet_size,
+                self.res, self.net]
+        self.cltr.push_player_data(self.name, data)
+
     def update(self, outcome, reward=None):
         self.res = outcome
-
         if reward:
             self.statistics['won'] += 1
             assert reward is not None
             self.statistics['net'] += reward
         else:
             self.statistics['lost'] += 1
+
+        if self.cltr:
+            self.submit_data()
 
         self.print_turn()
         self.net_list.append(self.statistics['net'])
@@ -247,21 +296,46 @@ class Player():
         self.bet(self.bet_size)  # this can actually be called without arguments
 
 
-strat1 = BaseStrategy()
-strat2 = BaseStrategy()
-p1 = Player(strategy=strat1, name='P1')
-p2 = Player(strategy=strat2, name='P2')
-table = Game(store_data=True)
-players = [p1, p2]
+def strat_test_base():
+    import datetime
+    start = datetime.datetime.now().time()
+    strat1 = BaseStrategy()
+    strat2 = BaseStrategy()
+    strat3 = BaseStrategy()
+    collector = Collector()
+    p1 = Player(strategy=strat1, name='P1', collector=collector)
+    p2 = Player(strategy=strat2, name='P2', collector=collector)
+    p3 = Player(strategy=strat3, name='P3', collector=collector)
+    table = Game(store_data=True)
+    players = [p1, p2, p3]
 
-print_header()
+    print_header()
+    for num in range(1000):
+        table.register(players)
+    table.plotz()
+    table.wb.save('test.xlsx')
+    print('times')
+    print('start:', start)
+    print('end:', datetime.datetime.now().time())
 
-for num in range(10):
-    table.register(players)
-table.plotz()
 
+def strat_test_pair():
+    strat1 = PairStrategy()
+    strat2 = PairStrategy()
+    p1 = Player(strategy=strat1, name='P1')
+    p2 = Player(strategy=strat2, name='P2')
+    p3 = Player(strategy=strat1, name='P3')
+    p4 = Player(strategy=strat2, name='P4')
+    p1.strategy.set_pair(p2)
+    p2.strategy.set_pair(p1)
+    p3.strategy.set_pair(p4)
+    p4.strategy.set_pair(p3)
+    players = [p1, p2, p3, p4]
+    table = Game(store_data=True)
 
-print('Statistics:')
-print('plays won:   ', p1.statistics['won'])
-print('plays lost:  ', p1.statistics['lost'])
-print('largest bet: ', p1.statistics['largest_bet'])
+    for num in range(100):
+        table.register(players)
+    table.plotz()
+
+strat_test_base()
+# strat_test_pair()

@@ -100,19 +100,19 @@ print('{:>3} {:>6} {:>4} {:>3} {:>6}'.format(
     'res',
     'net'))
 
-x, y = p1.play(100000)
+x, y = p1.play(1000)
 
 
-py.sign_in('etsvetanov', 'nsyswe1pg2')
-stream_id = '7dmuy3q0sd'
-stream = Stream(token=stream_id, maxpoints=1000)
-trace1 = Scatter(x=[], y=[], stream=stream)
-data = Data([trace1])
-layout = Layout(title='Graphz')
-fig = Figure(data=data, layout=layout)
-unique_url = py.plot(fig, filename='stream')
-py.plot(data)
-s = py.Stream(stream_id)
-s.write(dict(x=1, y=2))
-s.close()
+# py.sign_in('etsvetanov', 'nsyswe1pg2')
+# stream_id = '7dmuy3q0sd'
+# stream = Stream(token=stream_id, maxpoints=1000)
+# trace1 = Scatter(x=[], y=[], stream=stream)
+# data = Data([trace1])
+# layout = Layout(title='Graphz')
+# fig = Figure(data=data, layout=layout)
+# unique_url = py.plot(fig, filename='stream')
+# py.plot(data)
+# s = py.Stream(stream_id)
+# s.write(dict(x=1, y=2))
+# s.close()
 
