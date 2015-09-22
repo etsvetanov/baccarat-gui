@@ -39,7 +39,7 @@ class BaseStrategy():
         if self.i <= 2 or self.i == 4:
             if self.last_index == self.i and self.double_up == False:  # if double_up was False till now
                 self.double_up = True
-            elif self.double_up == True:  # if double_up was True till now
+            elif self.double_up:  # if double_up was True till now
                 self.double_up = False
 
     def get_bet_size(self):  # res - result
