@@ -2,7 +2,6 @@ import plotly.plotly as py
 
 from plotly.graph_objs import Scatter, Data
 from random import randint
-from data_visualization import *
 
 
 def print_header():
