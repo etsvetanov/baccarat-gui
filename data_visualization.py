@@ -43,7 +43,7 @@ class SpreadSheet():
         self.ws['A1'] = 'Casino'
         l = len(self.columns)
         for j in range(len(self.players)):
-            self.ws.merge_cells(start_row=1, start_column=3 + (l * j), end_row=1, end_column=7 + (l * j))
+            self.ws.merge_cells(start_row=1, start_column=3 + (l * j), end_row=1, end_column=2 + l + (l * j))
             c = self.ws.cell(row=1, column=3 + (l * j))
             c.value = self.players[j]
 
