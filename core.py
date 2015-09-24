@@ -63,11 +63,6 @@ class Game():
             else:
                 gambler.update(outcome='loss')
 
-        # if you write data to the spreadsheet before you update
-        # net won't be calculated
-        # maybe find a way to calc net then write data then
-        # do the rest of the strategy update process? !?!!!
-
     def plotz(self):
         py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
         traces = []
@@ -228,7 +223,7 @@ class Player():
         if self.cltr:
             self.submit_data()
 
-        self.print_turn()
+        # self.print_turn()
         self.net_list.append(self.statistics['net'])
 
         self.strategy.update(outcome, reward)
@@ -248,3 +243,62 @@ class Player():
         self.bet(self.bet_size)  # this can actually be called without arguments
 
 
+class OverseerStrategy(BaseStrategy):
+    """
+    This strategy is ment to be used on the Overseer class
+    """
+    def __init__(self, coefficient=1, minions=None):
+        self.minions = minions
+        BaseStrategy.__init__(self, coefficient)
+        self.calculated = False
+        self.bet_size = 0
+        self.bet_choice = None
+
+    def calculate(self):
+        minion_bets = {'player': 0, 'bank': 0}
+        for minion in self.minions:
+            minion_bets[minion.bet_choice] += minion.bet_size
+
+        if minion_bets['player'] > minion_bets['bank']:
+            self.bet_size, self.bet_choice = minion_bets['player'], 'player'
+        elif minion_bets['bank'] > minion_bets['player']:
+            self.bet_size, self.bet_choice = minion_bets['bank'], 'bank'
+        else:
+            self.bet_size, self.bet_choice = 0, 'tie'
+
+    def get_bet_choice(self):
+        if self.calculated:
+            self.calculated = False
+            return self.bet_choice
+        else:
+            self.calculate()
+            self.calculated = True
+            return self.bet_choice
+
+    def get_bet_size(self):
+        if self.calculated:
+            self.calculated = False
+            return self.bet_size
+        else:
+            self.calculate()
+            self.calculated = True
+            return self.bet_size
+
+
+class Overseer(Player):
+    """
+    This class represents a player that calculates bets depending on the other players bets.
+    It is ment to be used with the OverseerStrategy
+    """
+    def __init__(self, strategy, name, cltr=None):
+        Player.__init__(self, strategy, name, cltr)
+
+    def play(self):
+        self.bet_size = self.strategy.get_bet_size()
+        self.bet_choice = self.strategy.get_bet_choice()
+        self.bet(self.bet_size)
+
+    def submit_data(self):
+        data = [self.bet_choice, '--', '--', self.bet_size,
+                self.res, self.statistics['net']]
+        self.cltr.push_player_data(self.name, data)
