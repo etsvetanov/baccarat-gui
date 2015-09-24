@@ -207,7 +207,7 @@ class Player():
 
     def submit_data(self):
         data = [self.bet_choice, self.strategy.level, self.strategy.i,
-                self.bet_size if not self.strategy.double_up else '2*' + str(self.bet_size),
+                self.bet_size if not self.strategy.double_up else '2*' + str(self.bet_size/2),
                 self.res, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
