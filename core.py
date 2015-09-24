@@ -260,9 +260,9 @@ class OverseerStrategy(BaseStrategy):
             minion_bets[minion.bet_choice] += minion.bet_size
 
         if minion_bets['player'] > minion_bets['bank']:
-            self.bet_size, self.bet_choice = minion_bets['player'], 'player'
+            self.bet_size, self.bet_choice = minion_bets['player'] - minion_bets['bank'], 'player'
         elif minion_bets['bank'] > minion_bets['player']:
-            self.bet_size, self.bet_choice = minion_bets['bank'], 'bank'
+            self.bet_size, self.bet_choice = minion_bets['bank'] - minion_bets['player'], 'bank'
         else:
             self.bet_size, self.bet_choice = 0, 'tie'
 
