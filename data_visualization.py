@@ -36,7 +36,7 @@ class SpreadSheet():
         self.write()
         dt = datetime.now()
         stamp = '-'.join([str(dt.year), str(dt.month), str(dt.day), str(dt.hour), str(dt.minute), str(dt.second)])
-        self.wb.save(stamp + '.xlsx')
+        self.wb.save('graph-' + stamp + '.xlsx')
 
     def init_spreadsheet(self):
         self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
@@ -57,7 +57,7 @@ class SpreadSheet():
         rows = [chain.from_iterable(iterable) for iterable in zip(*data)]
 
         for outcome, row in zip(self.cltr.game_data, rows):
-            self.ws.append(['_', outcome] + list(row))
+            self.ws.append(outcome + list(row))
 
         # for i in range(len(self.gamblers) + 1):
         #     cell = self.ws.cell(row=len(self.ws.rows), column=2 + (6 * i))

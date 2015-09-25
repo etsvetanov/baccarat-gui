@@ -49,11 +49,11 @@ def strat_test_pair():
     players = [p1, p2, p3, p4]
 
     strat5 = OverseerStrategy(minions=players)
-    o5 = Overseer(strategy=strat5, name='O5', cltr=collector)
+    p5 = Overseer(strategy=strat5, name='RealPlayer', cltr=collector)
 
-    table = Game(collector)
-    for num in range(1000):
-        table.register(players + [o5])
+    table = Game(cltr=collector, gamblers=players + [p5], max_rounds=10000)
+    table.run()
+
     print('Plotting the results...')
     table.plotz()
     print('Filling in the spreadsheet data...')

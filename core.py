@@ -23,8 +23,10 @@ def roll():
 
 
 class Game():
-    def __init__(self, cltr=None):
-        self.gamblers = []
+    def __init__(self, gamblers, cltr=None, max_rounds=1000):
+        self.max_rounds = max_rounds
+        self.round = 0
+        self.gamblers = gamblers
         self.outcome = None
         self.cltr = cltr
 
@@ -36,22 +38,31 @@ class Game():
         else:
             return 'bank'
 
-    def register(self, gamblers):  # player objects
+    def add(self, gambler):  # player objects
+        # THIS WILL NOT WORK!
         self.outcome = None
-        self.gamblers = gamblers
+        self.gamblers.append(gambler)
         self.run()
 
+    def remove(self, gambler):
+        self.gamblers.remove(gambler)
+
+    def submit_data(self):
+        self.cltr.push_game_data([self.round, self.outcome])
+
     def run(self):
-        assert self.gamblers is not None
 
-        for gambler in self.gamblers:
-            gambler.play()
+        while self.gamblers and self.round <= self.max_rounds:
+            print('Round:', self.round)
+            self.round += 1
+            for gambler in self.gamblers:
+                gambler.play()
 
-        self.outcome = self.roll()
-        if self.cltr:
-            self.cltr.push_game_data(self.outcome)
+            self.outcome = self.roll()
+            if self.cltr:
+                self.submit_data()
 
-        self.notify_observers()
+            self.notify_observers()
 
     def notify_observers(self):
         assert self.outcome is not None
@@ -64,6 +75,7 @@ class Game():
                 gambler.update(outcome='loss')
 
     def plotz(self):
+        print('plotting the results...')
         py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
         traces = []
         num_of_rounds = len(self.gamblers[0].net_list)
@@ -190,11 +202,12 @@ class Player():
         self.cltr = cltr
         self.name = name
         self.strategy = strategy
-        self.bet_size = None
+        self.bet_size = 0
         self.bet_choice = None
         self.statistics = {'net': 0, 'won': 0, 'lost': 0, 'largest_bet': 0}
         self.res = 'loss'
         self.net_list = []
+        self.table = None
 
     def print_turn(self):
         print('{:>3} {:>6} {:>4} {:>5} {:>5} {:>6}'.format(
@@ -205,9 +218,13 @@ class Player():
             self.res,
             self.statistics['net']))
 
+    def join(self, table):
+        table.add(self)
+        self.table = table
+
     def submit_data(self):
         data = [self.bet_choice, self.strategy.level, self.strategy.i,
-                self.bet_size if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
+                str(self.bet_size) if not self.strategy.double_up else '2*' + str(int(self.bet_size / 2)),
                 self.res, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
