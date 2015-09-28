@@ -51,7 +51,7 @@ def strat_test_pair():
     strat5 = OverseerStrategy(minions=players)
     p5 = Overseer(strategy=strat5, name='RealPlayer', cltr=collector)
 
-    table = Game(cltr=collector, gamblers=players + [p5], max_rounds=10000)
+    table = Game(cltr=collector, gamblers=players + [p5], max_rounds=1000)
     table.run()
 
     print('Plotting the results...')

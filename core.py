@@ -2,6 +2,7 @@ import plotly.plotly as py
 
 from plotly.graph_objs import Scatter, Data
 from random import randint
+from .gui import Example
 
 
 def print_header():
@@ -50,19 +51,28 @@ class Game():
     def submit_data(self):
         self.cltr.push_game_data([self.round, self.outcome])
 
-    def run(self):
-
+    def run(self, rounds):
+        self.max_rounds = rounds
         while self.gamblers and self.round <= self.max_rounds:
-            print('Round:', self.round)
-            self.round += 1
-            for gambler in self.gamblers:
-                gambler.play()
+            self.deal()
 
+    def deal(self, outcome = None):
+
+        print('Round:', self.round)
+        self.round += 1
+        for gambler in self.gamblers:
+            gambler.play()
+        # print(outcome)
+
+        if outcome:
+            self.outcome = outcome
+        else:
             self.outcome = self.roll()
-            if self.cltr:
-                self.submit_data()
 
-            self.notify_observers()
+        if self.cltr:
+            self.submit_data()
+
+        self.notify_observers()
 
     def notify_observers(self):
         assert self.outcome is not None
