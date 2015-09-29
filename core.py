@@ -2,7 +2,6 @@ import plotly.plotly as py
 
 from plotly.graph_objs import Scatter, Data
 from random import randint
-from .gui import Example
 
 
 def print_header():
@@ -56,7 +55,7 @@ class Game():
         while self.gamblers and self.round <= self.max_rounds:
             self.deal()
 
-    def deal(self, outcome = None):
+    def deal(self, outcome=None):
 
         print('Round:', self.round)
         self.round += 1
@@ -220,7 +219,8 @@ class Player():
         self.table = None
 
     def print_turn(self):
-        print('{:>3} {:>6} {:>4} {:>5} {:>5} {:>6}'.format(
+        print('{:>15} {:>3} {:>6} {:>4} {:>5} {:>5} {:>6}'.format(
+            self.name,
             self.strategy.i,
             str(self.strategy.double_up),
             self.bet_size,
@@ -250,7 +250,7 @@ class Player():
         if self.cltr:
             self.submit_data()
 
-        # self.print_turn()
+        self.print_turn()
         self.net_list.append(self.statistics['net'])
 
         self.strategy.update(outcome, reward)
