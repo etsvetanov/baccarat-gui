@@ -11,6 +11,7 @@ class GUI(QWidget):
 
         self.game = game
         self.lbl = None
+        self.tbl = None
         self.initUI()
 
     def initUI(self):
@@ -21,9 +22,9 @@ class GUI(QWidget):
         hlabels = ['play', 'index', 'bet', 'result', 'net', 'partner']
         vlabels = [gambler.name for gambler in self.game.gamblers]
 
-        tbl = QTableWidget(len(vlabels), len(hlabels))
-        tbl.setHorizontalHeaderLabels(hlabels)
-        tbl.setVerticalHeaderLabels(vlabels)
+        self.tbl = QTableWidget(len(vlabels), len(hlabels))
+        self.tbl.setHorizontalHeaderLabels(hlabels)
+        self.tbl.setVerticalHeaderLabels(vlabels)
 
         hbox = QHBoxLayout()
         hbox.addWidget(btn1)
@@ -33,7 +34,7 @@ class GUI(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.lbl)
         layout.addLayout(hbox)
-        layout.addWidget(tbl)
+        layout.addWidget(self.tbl)
         # tbl.resizeColumnsToContents()
         # tbl.resizeRowsToContents()
         btn1.clicked.connect(self.buttonClicked)
@@ -48,6 +49,8 @@ class GUI(QWidget):
 
         sender = self.sender()
         self.game.deal(sender.text().lower())
+        self.populate_table()
         self.lbl.setText(sender.text().lower())
 
-
+    def populate_table(self):
+        for
