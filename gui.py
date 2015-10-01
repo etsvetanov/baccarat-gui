@@ -10,8 +10,8 @@ class GUI(QWidget):
         super().__init__()
 
         self.game = game
-        self.initUI()
         self.lbl = None
+        self.initUI()
 
     def initUI(self):
 
@@ -49,3 +49,5 @@ class GUI(QWidget):
         sender = self.sender()
         self.game.deal(sender.text().lower())
         self.lbl.setText(sender.text().lower())
+
+
