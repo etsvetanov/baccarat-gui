@@ -280,6 +280,15 @@ class OverseerStrategy(BaseStrategy):
         self.calculated = False
         self.bet_size = 0
         self.bet_choice = None
+        self.__last_index = '-'
+
+    @property
+    def last_index(self):
+        return '-'
+
+    @last_index.setter
+    def last_index(self, last_i):
+        pass
 
     def calculate(self):
         minion_bets = {'player': 0, 'bank': 0}
@@ -319,6 +328,8 @@ class Overseer(Player):
     """
     def __init__(self, strategy, name, cltr=None):
         Player.__init__(self, strategy, name, cltr)
+        self.__i = '-'
+
 
     def play(self):
         self.bet_size = self.strategy.get_bet_size()
