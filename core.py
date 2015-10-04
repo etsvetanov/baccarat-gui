@@ -1,5 +1,5 @@
 import plotly.plotly as py
-
+from abc import ABCMeta, abstractmethod
 from plotly.graph_objs import Scatter, Data
 from random import randint
 
@@ -102,7 +102,108 @@ class Game():
         unique_url = py.plot(data, filename='graph')
 
 
+class BasePlayer():
+    __metaclass__ = ABCMeta
+
+    def __init__(self, strategy, name, cltr=None):
+        self.cltr = cltr
+        self.name = name
+        self.strategy = strategy
+        self.bet_size = 0
+        self.bet_choice = None
+        self.statistics = {'net': 0, 'won': 0, 'lost': 0, 'largest_bet': 0}
+        self.res = 'loss'
+        self.table = None
+
+    @abstractmethod
+    def submit_data(self):
+        """Not implemented"""
+
+    @abstractmethod
+    def update(self, outcome, reward=None):
+        """Not implemented"""
+
+    def join(self, table):
+        table.add(self)
+        self.table = table
+
+    def bet(self, amount):
+        if amount > self.statistics['largest_bet']:
+            self.statistics['largest_bet'] = amount
+
+        self.statistics['net'] -= amount
+
+    def play(self):
+        self.bet_size = self.strategy.get_bet_size()
+        self.bet_choice = self.strategy.get_bet_choice()
+        assert self.bet_size is not None
+        assert self.bet_choice is not None
+
+        self.bet(self.bet_size)
+
+
+class Player(BasePlayer):
+
+    def submit_data(self):
+        data = [self.bet_choice, self.strategy.level, self.strategy.i,
+                str(self.bet_size) if not self.strategy.double_up else '2*' + str(int(self.bet_size / 2)),
+                self.res, self.statistics['net']]
+        self.cltr.push_player_data(self.name, data)
+
+    def update(self, outcome, reward=None):
+        self.res = outcome
+        if reward:
+            self.statistics['won'] += 1
+            assert reward is not None
+            self.statistics['net'] += reward
+        else:
+            self.statistics['lost'] += 1
+
+        if self.cltr:
+            self.submit_data()
+
+        self.strategy.update(outcome, reward)
+
+
+class Overseer(BasePlayer):
+    """
+    This class represents a player that calculates bets depending on the other players bets.
+    It is ment to be used with the OverseerStrategy
+    """
+    def __init__(self, strategy, name, cltr=None):
+        BasePlayer.__init__(self, strategy, name, cltr)
+
+    def submit_data(self):
+        data = [self.bet_choice, '--', '--', self.bet_size,
+                self.res, self.statistics['net']]
+        self.cltr.push_player_data(self.name, data)
+
+    def update(self, outcome, reward=None):
+        self.res = outcome
+        if reward:
+            self.statistics['won'] += 1
+            assert reward is not None
+            self.statistics['net'] += reward
+        else:
+            self.statistics['lost'] += 1
+
+        if self.cltr:
+            self.submit_data()
+
+
 class BaseStrategy():
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def get_bet_choice(self):
+        """ returns 'player' or 'bank' """
+
+    @abstractmethod
+    def get_bet_size(self):
+        """ returns bet size """
+
+
+class SingleStrategy(BaseStrategy):
     def __init__(self, coefficient=1):
         base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
         self.c = coefficient
@@ -152,7 +253,7 @@ class BaseStrategy():
             if self.double_up:
                 self.i = 0  # this is after we've played double bet and won -> we must go to 0
 
-        if self.i >= len(self.row):  # if we loose all go to [0] 
+        if self.i >= len(self.row):  # if we loose all go to [0]
             self.i = 0
             self.update_level(increase=True)
             # self.level += 1  # or self.level *= 2 ... linear or geometric
@@ -184,10 +285,10 @@ class BaseStrategy():
         return choice
 
 
-class PairStrategy(BaseStrategy):
+class PairStrategy(SingleStrategy):
     def __init__(self, coefficient=1):
+        SingleStrategy.__init__(self, coefficient)
         self.lead = False
-        BaseStrategy.__init__(self, coefficient)
         self.pair = None
 
     def set_pair(self, pair):
@@ -206,89 +307,18 @@ class PairStrategy(BaseStrategy):
             return choice
 
 
-class Player():
-    def __init__(self, strategy, name, cltr=None):
-        self.cltr = cltr
-        self.name = name
-        self.strategy = strategy
-        self.bet_size = 0
-        self.bet_choice = None
-        self.statistics = {'net': 0, 'won': 0, 'lost': 0, 'largest_bet': 0}
-        self.res = 'loss'
-        self.net_list = []
-        self.table = None
-
-    def print_turn(self):
-        print('{:>15} {:>3} {:>6} {:>4} {:>5} {:>5} {:>6}'.format(
-            self.name,
-            self.strategy.i,
-            str(self.strategy.double_up),
-            self.bet_size,
-            self.strategy.level,
-            self.res,
-            self.statistics['net']))
-
-    def join(self, table):
-        table.add(self)
-        self.table = table
-
-    def submit_data(self):
-        data = [self.bet_choice, self.strategy.level, self.strategy.i,
-                str(self.bet_size) if not self.strategy.double_up else '2*' + str(int(self.bet_size / 2)),
-                self.res, self.statistics['net']]
-        self.cltr.push_player_data(self.name, data)
-
-    def update(self, outcome, reward=None):
-        self.res = outcome
-        if reward:
-            self.statistics['won'] += 1
-            assert reward is not None
-            self.statistics['net'] += reward
-        else:
-            self.statistics['lost'] += 1
-
-        if self.cltr:
-            self.submit_data()
-
-        self.print_turn()
-        self.net_list.append(self.statistics['net'])
-
-        self.strategy.update(outcome, reward)
-
-    def bet(self, amount):
-        if amount > self.statistics['largest_bet']:
-            self.statistics['largest_bet'] = amount
-
-        self.statistics['net'] -= amount
-
-    def play(self):
-        self.bet_size = self.strategy.get_bet_size()
-        self.bet_choice = self.strategy.get_bet_choice()
-        assert self.bet_size is not None
-        assert self.bet_choice is not None
-
-        self.bet(self.bet_size)  # this can actually be called without arguments
-
-
 class OverseerStrategy(BaseStrategy):
     """
     This strategy is ment to be used on the Overseer class
     """
-    def __init__(self, coefficient=1, minions=None):
+    def __init__(self, minions=None):
         self.minions = minions
-        BaseStrategy.__init__(self, coefficient)
         self.calculated = False
         self.bet_size = 0
         self.bet_choice = None
-        self.__last_index = '-'
-
-    @property
-    def last_index(self):
-        return '-'
-
-    @last_index.setter
-    def last_index(self, last_i):
-        pass
+        """ the following are used only for filling data """
+        self.last_index = '-'
+        self.level = '-'
 
     def calculate(self):
         minion_bets = {'player': 0, 'bank': 0}
@@ -314,29 +344,9 @@ class OverseerStrategy(BaseStrategy):
     def get_bet_size(self):
         if self.calculated:
             self.calculated = False
-            return self.bet_size
+            return self.bet_choice, self.bet_size
         else:
             self.calculate()
             self.calculated = True
             return self.bet_size
 
-
-class Overseer(Player):
-    """
-    This class represents a player that calculates bets depending on the other players bets.
-    It is ment to be used with the OverseerStrategy
-    """
-    def __init__(self, strategy, name, cltr=None):
-        Player.__init__(self, strategy, name, cltr)
-        self.__i = '-'
-
-
-    def play(self):
-        self.bet_size = self.strategy.get_bet_size()
-        self.bet_choice = self.strategy.get_bet_choice()
-        self.bet(self.bet_size)
-
-    def submit_data(self):
-        data = [self.bet_choice, '--', '--', self.bet_size,
-                self.res, self.statistics['net']]
-        self.cltr.push_player_data(self.name, data)

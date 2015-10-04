@@ -22,13 +22,20 @@ class GUI(QWidget):
             btn.setMinimumWidth(100)
             btn.setMinimumHeight(70)
 
-        self.lbl = QLabel(' This is sometext')
+        self.lbl = QLabel('$0')
         self.lbl.setFrameShape(QFrame.WinPanel)
         self.lbl.setFrameShadow(QFrame.Sunken)
         # self.lbl.setContentsMargins(15, 15, 15, 15)
         self.lbl.setMinimumHeight(30)
         self.lbl.setMinimumWidth(100)
-        hlabels = ['partner', 'play', 'index', 'bet', 'result', 'net']
+        self.lbl.setStyleSheet("""
+                        .QLabel {
+                            color: red
+                        }
+                    """)
+        lbl2 = QLabel('Bet: ')
+
+        hlabels = ['partner', 'level', 'index', 'play', 'bet', 'result', 'net']
         vlabels = [gambler.name for gambler in self.game.gamblers]
 
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
@@ -36,20 +43,25 @@ class GUI(QWidget):
         self.tbl.setVerticalHeaderLabels(vlabels)
 
         lbl_box = QHBoxLayout()
+        lbl_box.addWidget(lbl2)
         lbl_box.addWidget(self.lbl)
         lbl_box.addStretch(1)
 
         # lbl_box.setContentsMargins(10, 10, 10, 10)
 
-        hbox = QHBoxLayout()
-        hbox.addWidget(btn1)
-        hbox.addWidget(btn2)
-        hbox.addStretch(1)
+        btn_box = QHBoxLayout()
+        btn_box.addWidget(btn1)
+        btn_box.addWidget(btn2)
+        btn_box.addLayout(lbl_box)
+        btn_box.addStretch(1)
+
+        tbl_box = QHBoxLayout()
+        tbl_box.addWidget(self.tbl)
 
         layout = QVBoxLayout()
-        layout.addLayout(lbl_box)
-        layout.addLayout(hbox)
-        layout.addWidget(self.tbl)
+        layout.addLayout(btn_box)
+        # layout.addLayout(lbl_box)
+        layout.addLayout(tbl_box)
         layout.addStretch(1)
         # tbl.resizeColumnsToContents()
         # tbl.resizeRowsToContents()
@@ -66,7 +78,8 @@ class GUI(QWidget):
         sender = self.sender()
         self.game.deal(sender.text().lower())
         self.populate_table()
-        self.lbl.setText(sender.text().lower())
+        p = self.game.gamblers[-1]
+        self.lbl.setText('$' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
         data = []
@@ -77,7 +90,7 @@ class GUI(QWidget):
             except AttributeError:
                 row.append('-')
 
-            row += g.bet_choice, g.strategy.last_index, g.bet_size, g.res, g.statistics['net']
+            row += g.strategy.level, g.strategy.last_index, g.bet_choice, g.bet_size, g.res, g.statistics['net']
             data.append(row)
 
         for i in range(len(data)):
