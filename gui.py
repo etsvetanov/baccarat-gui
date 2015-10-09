@@ -1,11 +1,10 @@
 __author__ = 'etsvetanov'
 
 from PyQt5.QtWidgets import (QWidget, QPushButton,
-    QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QFrame)
+                             QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QFrame)
 
 
 class GUI(QWidget):
-
     def __init__(self, game):
         super().__init__()
 

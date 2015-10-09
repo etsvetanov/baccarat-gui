@@ -1,6 +1,6 @@
-import plotly.plotly as py
+# import plotly.plotly as py
+# from plotly.graph_objs import Scatter, Data
 from abc import ABCMeta, abstractmethod
-from plotly.graph_objs import Scatter, Data
 from random import randint
 
 
@@ -83,23 +83,23 @@ class Game():
             else:
                 gambler.update(outcome='loss')
 
-    def plotz(self):
-        print('plotting the results...')
-        py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
-        traces = []
-        num_of_rounds = len(self.gamblers[0].net_list)
-        x = [i for i in range(num_of_rounds)]
-
-        for gambler in self.gamblers:
-            trace = Scatter(name=gambler.name, x=x, y=gambler.net_list)
-            traces.append(trace)
-
-        y_net_list = [trace['y'] for trace in traces]
-        y_net_total = [sum(amounts) for amounts in zip(*y_net_list)]
-        total_trace = Scatter(name='Total', x=x, y=y_net_total)
-        traces.append(total_trace)
-        data = Data(traces)
-        unique_url = py.plot(data, filename='graph')
+    # def plotz(self):
+    #     print('plotting the results...')
+    #     py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
+    #     traces = []
+    #     num_of_rounds = len(self.gamblers[0].net_list)
+    #     x = [i for i in range(num_of_rounds)]
+    #
+    #     for gambler in self.gamblers:
+    #         trace = Scatter(name=gambler.name, x=x, y=gambler.net_list)
+    #         traces.append(trace)
+    #
+    #     y_net_list = [trace['y'] for trace in traces]
+    #     y_net_total = [sum(amounts) for amounts in zip(*y_net_list)]
+    #     total_trace = Scatter(name='Total', x=x, y=y_net_total)
+    #     traces.append(total_trace)
+    #     data = Data(traces)
+    #     unique_url = py.plot(data, filename='graph')
 
 
 class BasePlayer():
