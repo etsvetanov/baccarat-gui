@@ -4,16 +4,6 @@ from abc import ABCMeta, abstractmethod
 from random import randint
 
 
-def print_header():
-    print('{:>3} {:>6} {:>4} {:>5} {:>5} {:>6}'.format(
-        'i',
-        'd_up',
-        'bet',
-        'level',
-        'res',
-        'net'))
-
-
 def roll():
     n = randint(0, 1)  # player : bank ratio is not exactly 50:50!
     if n == 1:
@@ -57,7 +47,7 @@ class Game():
 
     def deal(self, outcome=None):
 
-        print('Round:', self.round)
+        # print('Round:', self.round)
         self.round += 1
         for gambler in self.gamblers:
             gambler.play()
@@ -145,7 +135,12 @@ class BasePlayer():
 class Player(BasePlayer):
 
     def submit_data(self):
-        data = [self.bet_choice, self.strategy.level, self.strategy.i,
+        try:
+            partner = self.strategy.pair.name
+        except AttributeError:
+            partner = '--'
+
+        data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(int(self.bet_size / 2)),
                 self.res, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
@@ -174,7 +169,12 @@ class Overseer(BasePlayer):
         BasePlayer.__init__(self, strategy, name, cltr)
 
     def submit_data(self):
-        data = [self.bet_choice, '--', '--', self.bet_size,
+        """
+        submit_data is dependent on the the strategy.
+        submit_data can be implemented by a single "Player" class and checking for the presence
+        of "strategy" attributes
+        """
+        data = ['--', self.bet_choice, '--', '--', self.bet_size,
                 self.res, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
@@ -349,4 +349,5 @@ class OverseerStrategy(BaseStrategy):
             self.calculate()
             self.calculated = True
             return self.bet_size
+
 
