@@ -1,6 +1,6 @@
 __author__ = 'etsvetanov'
 
-from PyQt5.QtWidgets import (QWidget, QMainWindow, QPushButton, QApplication,\
+from PyQt5.QtWidgets import (QWidget, QPushButton,
     QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QFrame)
 
 
