@@ -172,12 +172,14 @@ class GUI(QWidget):
         for j in range(3):
             row = [i * c * self.mplier.value() ** j for i in base_row]
             row = [floor(i*10)/10 for i in row]
-            rows.append(row)
+            rows += row
 
-        child_num = preview_box.count()
-        for i in range(child_num):
-            item = begin_box.itemAt(i).widget()
-            item.setText()
+        child_num = self.preview_box.count()
+        for i in range(10, child_num):
+            item = self.preview_box.itemAt(i).widget()
+            item.setText('a')
+            print('i:', i)
+            # item.setText(str(rows[i]))
 
         print('bet:', c, 'mplier:', self.mplier.value())
 
