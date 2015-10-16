@@ -68,7 +68,10 @@ class Game():
 
         for gambler in self.gamblers:
             if gambler.bet_choice == self.outcome:
-                amount = gambler.bet_size * 2
+                if self.outcome == 'player':
+                    amount = gambler.bet_size * 2
+                else:
+                    amount = gambler.bet_size * 1.95
                 gambler.update(outcome='win', reward=amount)
             else:
                 gambler.update(outcome='loss')
@@ -163,7 +166,7 @@ class Player(BasePlayer):
 class Overseer(BasePlayer):
     """
     This class represents a player that calculates bets depending on the other players bets.
-    It is ment to be used with the OverseerStrategy
+    It is meant to be used with the OverseerStrategy
     """
     def __init__(self, strategy, name, cltr=None):
         BasePlayer.__init__(self, strategy, name, cltr)
@@ -204,7 +207,7 @@ class BaseStrategy():
 
 
 class SingleStrategy(BaseStrategy):
-    def __init__(self, coefficient=1):
+    def __init__(self, coefficient=1, base=2):
         base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
         self.c = coefficient
         self.row = [i * self.c for i in base_row]
@@ -214,6 +217,7 @@ class SingleStrategy(BaseStrategy):
         self.level = 1
         self.level_target = 0  # drop to lower level after this gets to (sum(self.row) * level ) / 2
         self.last_index = 0
+        self.base = base
 
     def update(self, outcome, reward=None):
         self.outcome = outcome
@@ -267,7 +271,7 @@ class SingleStrategy(BaseStrategy):
             self.double_up = False
 
     def get_bet_size(self):  # res - result
-        level_multiplier = 2 ** (self.level - 1)
+        level_multiplier = self.base ** (self.level - 1)
 
         if self.double_up:
             bet = self.row[self.i] * level_multiplier * 2  # or make double_up int and multiply by it
@@ -286,8 +290,8 @@ class SingleStrategy(BaseStrategy):
 
 
 class PairStrategy(SingleStrategy):
-    def __init__(self, coefficient=1):
-        SingleStrategy.__init__(self, coefficient)
+    def __init__(self, coefficient=1, base=2):
+        SingleStrategy.__init__(self, coefficient, base)
         self.lead = False
         self.pair = None
 
