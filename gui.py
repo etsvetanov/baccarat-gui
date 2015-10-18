@@ -172,7 +172,7 @@ class GUI(QWidget):
         self.setLayout(self.layout)
         self.setGeometry(300, 300, 900, 600)
         self.setMinimumSize(900, 600)
-        self.setWindowTitle('Event Sender')
+        self.setWindowTitle('Baccarat')
         self.show()
 
     # noinspection PyTypeChecker
@@ -213,6 +213,8 @@ class GUI(QWidget):
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
         self.tbl.setHorizontalHeaderLabels(hlabels)
         self.tbl.setVerticalHeaderLabels(vlabels)
+        # self.tbl.setMaximumHeight(355)
+        self.tbl.setMinimumHeight(355)
         tbl_box = QHBoxLayout()
         tbl_box.addWidget(self.tbl)
         self.play_layout.addLayout(tbl_box)
@@ -230,17 +232,17 @@ class GUI(QWidget):
         self.game.deal(sender.text().lower())
         self.populate_table()
         p = self.game.gamblers[-1]
-        self.lbl.setText('  $' + str(round(p.bet_size, 1)) + ' on ' + p.bet_choice.upper())
+        self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
         data = []
         for g in self.game.gamblers:
             row = self.game.cltr.player_data[g.name][-1]
             # row[-1] = floor(row[-1]*100)/100
-            row[-1] = round(row[-1], 2)
+            # row[-1] = round(row[-1], 2)
             data.append(row)
 
-        data[-1][-3] = round(data[-1][-3], 1)
+        # data[-1][-3] = round(data[-1][-3], 1)
 
         for i in range(len(data)):
             for j in range(len(data[i])):

@@ -124,7 +124,7 @@ class BasePlayer():
         if amount > self.statistics['largest_bet']:
             self.statistics['largest_bet'] = amount
 
-        self.statistics['net'] -= amount
+        self.statistics['net'] = round(self.statistics['net'] - amount, 2)
 
     def play(self):
         self.bet_size = self.strategy.get_bet_size()
@@ -153,7 +153,7 @@ class Player(BasePlayer):
         if reward:
             self.statistics['won'] += 1
             assert reward is not None
-            self.statistics['net'] += reward
+            self.statistics['net'] = round(self.statistics['net'] + reward, 2)
         else:
             self.statistics['lost'] += 1
 
@@ -186,7 +186,7 @@ class Overseer(BasePlayer):
         if reward:
             self.statistics['won'] += 1
             assert reward is not None
-            self.statistics['net'] += reward
+            self.statistics['net'] = round(self.statistics['net'] + reward, 2)
         else:
             self.statistics['lost'] += 1
 
@@ -281,7 +281,7 @@ class SingleStrategy(BaseStrategy):
         assert bet > 0
         self.level_target -= bet
 
-        return bet
+        return round(bet, 1)
 
     @staticmethod
     def get_bet_choice():
@@ -327,7 +327,8 @@ class OverseerStrategy(BaseStrategy):
     def calculate(self):
         minion_bets = {'player': 0, 'bank': 0}
         for minion in self.minions:
-            minion_bets[minion.bet_choice] += minion.bet_size
+            # minion_bets[minion.bet_choice] += minion.bet_size
+            minion_bets[minion.bet_choice] = round(minion_bets[minion.bet_choice] + minion.bet_size, 2)
 
         if minion_bets['player'] > minion_bets['bank']:
             self.bet_size, self.bet_choice = minion_bets['player'] - minion_bets['bank'], 'player'
@@ -335,6 +336,12 @@ class OverseerStrategy(BaseStrategy):
             self.bet_size, self.bet_choice = minion_bets['bank'] - minion_bets['player'], 'bank'
         else:
             self.bet_size, self.bet_choice = 0, 'tie'
+
+        if self.bet_choice == 'player' and self.bet_size == 0:
+            raise NameError('lol this is name error, sure')
+
+        if self.bet_choice == 'bank' and self.bet_size == 0:
+            raise NameError('another name error, trolol')
 
     def get_bet_choice(self):
         if self.calculated:
@@ -352,6 +359,6 @@ class OverseerStrategy(BaseStrategy):
         else:
             self.calculate()
             self.calculated = True
-            return self.bet_size
+            return round(self.bet_size, 1)
 
 
