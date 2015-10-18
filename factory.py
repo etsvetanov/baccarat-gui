@@ -13,12 +13,12 @@ class GameFactory():
     def create(self):
         players = []
         collector = Collector()
-        for i in self.num_p:
-            strategy_a = PairStrategy(coefficient=self.starting_bet)
-            p1 = Player(strategy=strategy_a, name='P' + str(i*2 - 1), cltr=collector)
+        for i in range(self.num_p):
+            strategy_a = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)
+            p1 = Player(strategy=strategy_a, name='P' + str(i*2 + 1), cltr=collector)
 
-            strategy_b = PairStrategy()
-            p2 = Player(stratagy=strategy_b, name='P' + str(i*2), cltr=collector)
+            strategy_b = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)
+            p2 = Player(strategy=strategy_b, name='P' + str(i*2 + 2), cltr=collector)
 
             p1.strategy.set_pair(p2)
             p2.strategy.set_pair(p1)

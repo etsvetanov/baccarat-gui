@@ -19,7 +19,6 @@ def strat_test_base():
     table = Game(collector)
     players = [p1, p2, p3]
 
-    print_header()
     for num in range(10000):
         table.register(players)
     table.plotz()
@@ -96,7 +95,7 @@ if __name__ == '__main__':
     cltr, game = factory()
 
     app = QApplication(sys.argv)
-    ex = GUI(game)
+    ex = GUI()
     sys.exit(app.exec_())
 
     # strat_test_pair()

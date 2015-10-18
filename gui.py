@@ -5,12 +5,14 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QVBoxLayout, QHBoxLayout, QFrame, QDoubleSpinBox,
                              QSpinBox, QGridLayout)
 
+from factory import GameFactory
+
 
 class GUI(QWidget):
-    def __init__(self, game):  # TODO: game should not be a parameter
+    def __init__(self):  # TODO: game should not be a parameter
         super().__init__()
 
-        self.game = game  # TODO: self.game should be 'None' and set later when 'BEGIN' is pressed
+        self.game = None  # TODO: self.game should be 'None' and set later when 'BEGIN' is pressed
         self.lbl = None
         self.tbl = None
         self.btn1 = None
@@ -123,14 +125,22 @@ class GUI(QWidget):
         for i in range(4):
             for j in range(10):
                 # label = QLabel(str(i) + ',' + str(j))
-                label = QLabel('x')
+                label = QLabel('[' + str(j) + ']')
                 self.preview_box.addWidget(label, i, j)
 
+        level_labels_box = QGridLayout()
+        level_labels_box.addWidget(QLabel(''), 0, 0)
+        for i in range(1, 4):
+            label = QLabel('Level' + str(i))
+            level_labels_box.addWidget(label, i, 0)
+
+        self.update_preview()
         self.set_layout = QHBoxLayout()
         self.set_layout.addLayout(start_box)
         self.set_layout.addLayout(player_box)
         self.set_layout.addLayout(mplier_box)
         self.set_layout.addLayout(begin_box)
+        self.set_layout.addLayout(level_labels_box)
         self.set_layout.addLayout(self.preview_box)
         # self.set_layout.addWidget(self.begin_btn)
         self.set_layout.addStretch(1)
@@ -160,7 +170,8 @@ class GUI(QWidget):
         # self.layout.removeItem(self.set_layout)
         self.layout.addStretch(1)
         self.setLayout(self.layout)
-        self.setGeometry(300, 300, 800, 400)
+        self.setGeometry(300, 300, 900, 600)
+        self.setMinimumSize(900, 600)
         self.setWindowTitle('Event Sender')
         self.show()
 
@@ -171,15 +182,18 @@ class GUI(QWidget):
         rows = []
         for j in range(3):
             row = [i * c * self.mplier.value() ** j for i in base_row]
-            row = [floor(i*10)/10 for i in row]
+            row = [round(i, 2) for i in row]
             rows += row
 
         child_num = self.preview_box.count()
         for i in range(10, child_num):
             item = self.preview_box.itemAt(i).widget()
-            item.setText('a')
-            print('i:', i)
-            # item.setText(str(rows[i]))
+            print(item.text())
+            # print(type(item))
+            # print('i:', i)
+            # print('i:', str(i))
+            # print(str(rows[i - 10]))
+            item.setText(str(rows[i - 10]))
 
         print('bet:', c, 'mplier:', self.mplier.value())
 
@@ -190,6 +204,10 @@ class GUI(QWidget):
         print('the values are:', starting_bet, p_num, mplier)
         print('types:', type(starting_bet), type(p_num), type(mplier))
 
+        factory = GameFactory(num_p=p_num, multiplier=mplier, starting_bet=starting_bet)
+        _, self.game = factory.create()
+
+        # GameFactory should be instanced before this
         hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'net']
         vlabels = [gambler.name for gambler in self.game.gamblers]
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
@@ -212,14 +230,17 @@ class GUI(QWidget):
         self.game.deal(sender.text().lower())
         self.populate_table()
         p = self.game.gamblers[-1]
-        self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
+        self.lbl.setText('  $' + str(round(p.bet_size, 1)) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
         data = []
         for g in self.game.gamblers:
             row = self.game.cltr.player_data[g.name][-1]
-            row[-1] = floor(row[-1]*100)/100
+            # row[-1] = floor(row[-1]*100)/100
+            row[-1] = round(row[-1], 2)
             data.append(row)
+
+        data[-1][-3] = round(data[-1][-3], 1)
 
         for i in range(len(data)):
             for j in range(len(data[i])):

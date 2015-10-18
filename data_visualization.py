@@ -15,7 +15,7 @@ class Collector():
         """
         :param name: name of the player
         :param data: the data itself
-        :return:
+        data = [partner, bet_choice, level, index, bet_size, res, net]
         """
         self.player_data[name].append(data)
 

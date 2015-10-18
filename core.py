@@ -144,7 +144,7 @@ class Player(BasePlayer):
             partner = '--'
 
         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
-                str(self.bet_size) if not self.strategy.double_up else '2*' + str(int(self.bet_size / 2)),
+                str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
                 self.res, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
