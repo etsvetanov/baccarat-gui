@@ -310,6 +310,58 @@ class PairStrategy(SingleStrategy):
             choice = roll()
             return choice
 
+    def get_bet_size(self):  # res - result
+        level_multiplier = self.base ** (self.level - 1)
+
+        if self.double_up:
+            bet = self.row[self.i] * level_multiplier * 2  # or make double_up int and multiply by it
+        else:
+            bet = self.row[self.i] * level_multiplier
+
+        assert bet > 0
+        self.level_target -= bet
+        self.pair.strategy.level_target -= bet
+
+        return round(bet, 1)
+
+    def update_level(self, increase=False):
+        # TODO: the level_target (so far) has been a number that should reach the "target" so the level can be
+        # TODO: reduced. Refactor it so level should be reduced from level x to 0 always when level_target goes over 0
+        # TODO: in other words return to level 0 if the lost amount so far has be won again
+        """
+        go to a higher level if you loose the last bet in the row
+        or go to level 0 if you win back the cumulative amount lost
+        """
+        if increase:
+            self.level += 1
+            self.pair.strategy.level += 1
+        # TODO: refactor this so the strategy goes through update_level first
+        # TODO: this way you can just call update_level(increase=True) on the partner to go to the next level
+        elif self.level_target >= 0:
+            self.level = 1
+            self.level_target = 0
+            self.pair.strategy.level = 1
+            self.pair.strategy.level_target = 0
+
+    def update_index(self):
+
+        self.last_index = self.i  # we are remembering the last index before calculating the new one
+
+        if self.outcome == 'loss':
+            self.i += 1
+        elif self.i == 3 or self.i >= 5:
+            self.i -= 3
+        else:  # if self.i <= 2 or self.i == 4 AND last_outcome == 'w'
+            if self.double_up:
+                self.i = 0  # this is after we've played double bet and won -> we must go to 0
+
+        if self.i >= len(self.row):  # if we loose all go to [0]
+            self.i = 0
+            self.pair.strategy.i = 0
+            self.update_level(increase=True)
+            # self.level += 1  # or self.level *= 2 ... linear or geometric
+        assert 0 <= self.i < len(self.row)
+
 
 class OverseerStrategy(BaseStrategy):
     """
