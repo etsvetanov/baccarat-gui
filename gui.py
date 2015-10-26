@@ -208,7 +208,7 @@ class GUI(QWidget):
         _, self.game = factory.create()
 
         # GameFactory should be instanced before this
-        hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'net']
+        hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
         vlabels = [gambler.name for gambler in self.game.gamblers]
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
         self.tbl.setHorizontalHeaderLabels(hlabels)

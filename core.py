@@ -59,7 +59,7 @@ class Game():
             self.outcome = self.roll()
 
         if self.cltr:
-            self.submit_data()
+            self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
 
         self.notify_observers()
 
@@ -143,9 +143,14 @@ class Player(BasePlayer):
         except AttributeError:
             partner = '--'
 
+        # try:
+        target = round(self.strategy.level_target, 2)
+        # except AttributeError:
+        #     target = '--'
+
         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
-                self.res, self.statistics['net']]
+                self.res, target, self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
@@ -178,7 +183,7 @@ class Overseer(BasePlayer):
         of "strategy" attributes
         """
         data = ['--', self.bet_choice, '--', '--', self.bet_size,
-                self.res, self.statistics['net']]
+                self.res, '--', self.statistics['net']]
         self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
@@ -240,8 +245,6 @@ class SingleStrategy(BaseStrategy):
         elif self.level_target >= ((sum(self.row) * (2 ** (self.level - 1))) / 2):
             self.level -= 1
             self.level_target = 0
-        else:
-            pass
 
         if self.level < 1:
             self.level = 1
@@ -310,6 +313,16 @@ class PairStrategy(SingleStrategy):
             choice = roll()
             return choice
 
+    def update(self, outcome, reward=None):
+        self.outcome = outcome
+        self.update_index()
+        self.is_double()
+
+        if reward:
+            self.level_target += reward
+            self.pair.strategy.level_target += reward
+            self.update_level()
+
     def get_bet_size(self):  # res - result
         level_multiplier = self.base ** (self.level - 1)
 
@@ -325,9 +338,6 @@ class PairStrategy(SingleStrategy):
         return round(bet, 1)
 
     def update_level(self, increase=False):
-        # TODO: the level_target (so far) has been a number that should reach the "target" so the level can be
-        # TODO: reduced. Refactor it so level should be reduced from level x to 0 always when level_target goes over 0
-        # TODO: in other words return to level 0 if the lost amount so far has be won again
         """
         go to a higher level if you loose the last bet in the row
         or go to level 0 if you win back the cumulative amount lost
@@ -337,7 +347,7 @@ class PairStrategy(SingleStrategy):
             self.pair.strategy.level += 1
         # TODO: refactor this so the strategy goes through update_level first
         # TODO: this way you can just call update_level(increase=True) on the partner to go to the next level
-        elif self.level_target >= 0:
+        elif self.level_target > 0:
             self.level = 1
             self.level_target = 0
             self.pair.strategy.level = 1
