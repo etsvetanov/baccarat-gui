@@ -207,8 +207,8 @@ class GUI(QWidget):
         sender = self.sender()
         self.game.set_outcome(sender.text().lower())
         self.populate_table()
-        p = self.game.gamblers[-1]
-        self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
+        # p = self.game.gamblers[-1]
+        # self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def calculate(self):
         self.btn1.setDisabled(False)
@@ -216,6 +216,8 @@ class GUI(QWidget):
         self.btn3.setDisabled(True)
         self.game.deal()
         self.populate_table()
+        p = self.game.gamblers[-1]
+        self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
         data = []
