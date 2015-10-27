@@ -60,14 +60,15 @@ class GUI(QWidget):
 
         self.btn1 = QPushButton("Player")
         self.btn2 = QPushButton("Bank")
-        self.btn1.setDisabled(True)
-        self.btn2.setDisabled(True)
+        self.btn3 = QPushButton("Calculate")
         self.btn1.clicked.connect(self.buttonClicked)
         self.btn2.clicked.connect(self.buttonClicked)
+        self.btn3.clicked.connect(self.calculate)
 
-        for btn in [self.btn1, self.btn2, self]:
+        for btn in [self.btn1, self.btn2, self.btn3]:
             btn.setMinimumWidth(100)
             btn.setMinimumHeight(70)
+            btn.setDisabled(True)
 
         self.lbl = QLabel('  $0')
         self.lbl.setFrameShape(QFrame.WinPanel)
@@ -82,26 +83,10 @@ class GUI(QWidget):
                     """)
         lbl2 = QLabel('Bet: ')
 
-        # hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'net']
-        # vlabels = [gambler.name for gambler in self.game.gamblers]
-        #
-        # self.tbl = QTableWidget(len(vlabels), len(hlabels))
-        # self.tbl.setHorizontalHeaderLabels(hlabels)
-        # self.tbl.setVerticalHeaderLabels(vlabels)
-
         """----- Layouts ------"""
         """ there is one main layout - VBox - layout """
         """ and two sub-main layouts - set_layout and play_layout """
         """ everything else is a sub layout to either of set_layout or play_layout """
-        # set_box = QGridLayout()
-        # set_box.addWidget(start_lbl, 0, 0)
-        # set_box.addWidget(self.starting_bet, 1, 0)
-        # set_box.addWidget(p_num_lbl, 0, 1)
-        # set_box.addWidget(p_num, 1, 1)
-        # set_box.setColumnMinimumWidth(0, 50)
-        # set_box.setColumnMinimumWidth(1, 50)
-        # set_box.setColumnStretch(0, 0)
-        # set_box.setColumnStretch(1, 0)
         start_box = QVBoxLayout()
         start_box.addWidget(start_lbl)
         start_box.addWidget(self.starting_bet)
@@ -154,6 +139,7 @@ class GUI(QWidget):
         btn_box.addWidget(self.btn1)
         btn_box.addWidget(self.btn2)
         btn_box.addLayout(lbl_box)
+        btn_box.addWidget(self.btn3)
         btn_box.addStretch(1)
 
         # tbl_box = QHBoxLayout()
@@ -203,36 +189,39 @@ class GUI(QWidget):
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
         self.tbl.setHorizontalHeaderLabels(hlabels)
         self.tbl.setVerticalHeaderLabels(vlabels)
-        # self.tbl.setMaximumHeight(355)
         self.tbl.setMinimumHeight(355)
         tbl_box = QHBoxLayout()
         tbl_box.addWidget(self.tbl)
         self.play_layout.addLayout(tbl_box)
-        # ^ TODO: move table creation in a separate function
 
         self.starting_bet.setDisabled(True)
         self.p_num.setDisabled(True)
         self.mplier.setDisabled(True)
         self.begin_btn.setDisabled(True)
-        self.btn1.setDisabled(False)
-        self.btn2.setDisabled(False)
+        self.btn3.setDisabled(False)
 
     def buttonClicked(self):
+        self.btn1.setDisabled(True)
+        self.btn2.setDisabled(True)
+        self.btn3.setDisabled(False)
         sender = self.sender()
-        self.game.deal(sender.text().lower())
+        self.game.set_outcome(sender.text().lower())
         self.populate_table()
         p = self.game.gamblers[-1]
         self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
+
+    def calculate(self):
+        self.btn1.setDisabled(False)
+        self.btn2.setDisabled(False)
+        self.btn3.setDisabled(True)
+        self.game.deal()
+        self.populate_table()
 
     def populate_table(self):
         data = []
         for g in self.game.gamblers:
             row = self.game.cltr.player_data[g.name][-1]
-            # row[-1] = floor(row[-1]*100)/100
-            # row[-1] = round(row[-1], 2)
             data.append(row)
-
-        # data[-1][-3] = round(data[-1][-3], 1)
 
         for i in range(len(data)):
             for j in range(len(data[i])):

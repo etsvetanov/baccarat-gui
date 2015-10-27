@@ -11,13 +11,16 @@ class Collector():
         self.player_data = defaultdict(list)
         self.game_data = []
 
-    def push_player_data(self, name, data):
+    def push_player_data(self, name, data, append=True):
         """
         :param name: name of the player
         :param data: the data itself
         data = [partner, bet_choice, level, index, bet_size, res, net]
         """
-        self.player_data[name].append(data)
+        if append:
+            self.player_data[name].append(data)
+        else:
+            self.player_data[name][-1] = data
 
     def push_game_data(self, outcome):
         self.game_data.append(outcome)

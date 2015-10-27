@@ -45,23 +45,41 @@ class Game():
         while self.gamblers and self.round <= self.max_rounds:
             self.deal()
 
-    def deal(self, outcome=None):
-
-        # print('Round:', self.round)
-        self.round += 1
-        for gambler in self.gamblers:
-            gambler.play()
-        # print(outcome)
+    def set_outcome(self, outcome=None):
 
         if outcome:
             self.outcome = outcome
         else:
             self.outcome = self.roll()
 
+        self.notify_observers()
+
+    def deal(self):
+        self.round += 1
+        for gambler in self.gamblers:
+            gambler.play()
+
+
         if self.cltr:
             self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
 
-        self.notify_observers()
+    # def set_outcome(self, outcome=None):
+    #
+    #     # print('Round:', self.round)
+    #     self.round += 1
+    #     for gambler in self.gamblers:
+    #         gambler.play()
+    #     # print(outcome)
+    #
+    #     if outcome:
+    #         self.outcome = outcome
+    #     else:
+    #         self.outcome = self.roll()
+    #
+    #     if self.cltr:
+    #         self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
+    #
+    #     self.notify_observers()
 
     def notify_observers(self):
         assert self.outcome is not None
@@ -108,9 +126,40 @@ class BasePlayer():
         self.res = 'loss'
         self.table = None
 
-    @abstractmethod
-    def submit_data(self):
-        """Not implemented"""
+    def submit_data(self, pre_result=True):
+
+        try:
+            partner = self.strategy.pair.name
+        except AttributeError:
+            partner = '--'
+
+        try:
+            target = round(self.strategy.level_target, 2)
+        except AttributeError:
+            target = '--'
+
+        try:
+            level = self.strategy.level
+        except AttributeError:
+            level = '--'
+
+        try:
+            index = self.strategy.i
+        except AttributeError:
+            index = '--'
+
+        try:
+            bet = str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2)
+        except AttributeError:
+            bet = str(self.bet_size)
+
+        if pre_result:
+            data = [partner, self.bet_choice, level, index, bet, '--', '--', '--']
+            self.cltr.push_player_data(self.name, data)
+        else:
+            data = [partner, self.bet_choice, level, index, bet, self.res, target, self.statistics['net']]
+
+            self.cltr.push_player_data(self.name, data, append=False)
 
     @abstractmethod
     def update(self, outcome, reward=None):
@@ -132,26 +181,45 @@ class BasePlayer():
         assert self.bet_size is not None
         assert self.bet_choice is not None
 
+        self.submit_data(pre_result=True)
         self.bet(self.bet_size)
 
 
 class Player(BasePlayer):
 
-    def submit_data(self):
-        try:
-            partner = self.strategy.pair.name
-        except AttributeError:
-            partner = '--'
-
-        # try:
-        target = round(self.strategy.level_target, 2)
-        # except AttributeError:
-        #     target = '--'
-
-        data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
-                str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
-                self.res, target, self.statistics['net']]
-        self.cltr.push_player_data(self.name, data)
+    # def submit_data(self, pre_result=True):
+    #     if pre_result:
+    #         try:
+    #             partner = self.strategy.pair.name
+    #         except AttributeError:
+    #             partner = '--'
+    #
+    #         # try:
+    #         target = round(self.strategy.level_target, 2)
+    #         # except AttributeError:
+    #         #     target = '--'
+    #
+    #         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
+    #                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
+    #                 '- ', '- ', '- ']
+    #         self.cltr.push_player_data(self.name, data)
+    #
+    #     else:
+    #         try:
+    #             partner = self.strategy.pair.name
+    #         except AttributeError:
+    #             partner = '--'
+    #
+    #         # try:
+    #         target = round(self.strategy.level_target, 2)
+    #         # except AttributeError:
+    #         #     target = '--'
+    #
+    #         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
+    #                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
+    #                 self.res, target, self.statistics['net']]
+    #
+    #         self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
         self.res = outcome
@@ -168,7 +236,7 @@ class Player(BasePlayer):
             print('ERRORRORORROR')
 
         if self.cltr:
-            self.submit_data()
+            self.submit_data(pre_result=False)
 
         self.strategy.update(outcome)
 
@@ -181,15 +249,15 @@ class Overseer(BasePlayer):
     def __init__(self, strategy, name, cltr=None):
         BasePlayer.__init__(self, strategy, name, cltr)
 
-    def submit_data(self):
-        """
-        submit_data is dependent on the the strategy.
-        submit_data can be implemented by a single "Player" class and checking for the presence
-        of "strategy" attributes
-        """
-        data = ['--', self.bet_choice, '--', '--', self.bet_size,
-                self.res, '--', self.statistics['net']]
-        self.cltr.push_player_data(self.name, data)
+    # def submit_data(self):
+    #     """
+    #     submit_data is dependent on the the strategy.
+    #     submit_data can be implemented by a single "Player" class and checking for the presence
+    #     of "strategy" attributes
+    #     """
+    #     data = ['--', self.bet_choice, '--', '--', self.bet_size,
+    #             self.res, '--', self.statistics['net']]
+    #     self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
         self.res = outcome
@@ -201,7 +269,7 @@ class Overseer(BasePlayer):
             self.statistics['lost'] += 1
 
         if self.cltr:
-            self.submit_data()
+            self.submit_data(pre_result=False)
 
 
 class BaseStrategy():
@@ -324,7 +392,7 @@ class PairStrategy(SingleStrategy):
             self.pair.strategy.level_target += reward
             self.update_level()
 
-    def update(self, outcome,):
+    def update(self, outcome):
         self.outcome = outcome
         self.update_index()
         self.is_double()
@@ -351,9 +419,7 @@ class PairStrategy(SingleStrategy):
         if increase:
             self.level += 1
             self.pair.strategy.level += 1
-        # TODO: refactor this so the strategy goes through update_level first
-        # TODO: this way you can just call update_level(increase=True) on the partner to go to the next level
-        elif self.level_target > 0:
+        elif self.level_target > 0:  # TODO: also check if level > 1 then reset both players indexes to 0
             self.level = 1
             self.level_target = 0
             self.pair.strategy.level = 1
@@ -389,8 +455,8 @@ class OverseerStrategy(BaseStrategy):
         self.bet_size = 0
         self.bet_choice = None
         """ the following are used only for filling data """
-        self.last_index = '-'
-        self.level = '-'
+        # self.last_index = '-'
+        # self.level = '-'
 
     def calculate(self):
         minion_bets = {'player': 0, 'bank': 0}
