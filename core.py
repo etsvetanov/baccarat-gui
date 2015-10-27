@@ -162,10 +162,15 @@ class Player(BasePlayer):
         else:
             self.statistics['lost'] += 1
 
+        try:
+            self.strategy.update_level_target(reward)
+        except AttributeError:
+            print('ERRORRORORROR')
+
         if self.cltr:
             self.submit_data()
 
-        self.strategy.update(outcome, reward)
+        self.strategy.update(outcome)
 
 
 class Overseer(BasePlayer):
@@ -313,15 +318,16 @@ class PairStrategy(SingleStrategy):
             choice = roll()
             return choice
 
-    def update(self, outcome, reward=None):
-        self.outcome = outcome
-        self.update_index()
-        self.is_double()
-
+    def update_level_target(self, reward=None):
         if reward:
             self.level_target += reward
             self.pair.strategy.level_target += reward
             self.update_level()
+
+    def update(self, outcome,):
+        self.outcome = outcome
+        self.update_index()
+        self.is_double()
 
     def get_bet_size(self):  # res - result
         level_multiplier = self.base ** (self.level - 1)

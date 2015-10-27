@@ -188,21 +188,11 @@ class GUI(QWidget):
         child_num = self.preview_box.count()
         for i in range(10, child_num):
             item = self.preview_box.itemAt(i).widget()
-            print(item.text())
-            # print(type(item))
-            # print('i:', i)
-            # print('i:', str(i))
-            # print(str(rows[i - 10]))
             item.setText(str(rows[i - 10]))
-
-        print('bet:', c, 'mplier:', self.mplier.value())
 
     def begin(self):
         # self.starting_bet, self.p_num, self.mplier
         starting_bet, p_num, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
-
-        print('the values are:', starting_bet, p_num, mplier)
-        print('types:', type(starting_bet), type(p_num), type(mplier))
 
         factory = GameFactory(num_p=p_num, multiplier=mplier, starting_bet=starting_bet)
         _, self.game = factory.create()
