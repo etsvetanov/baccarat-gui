@@ -40,7 +40,7 @@ class GUI(QWidget):
         # ----------------------------------
         p_num_lbl = QLabel('Number of pairs')
         self.p_num = QSpinBox()
-        self.p_num.setRange(1, 5)
+        self.p_num.setRange(1, 10)
         self.p_num.setMinimumHeight(50)
         self.p_num.setMinimumWidth(120)
         # -----------------------------------
@@ -189,7 +189,7 @@ class GUI(QWidget):
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
         self.tbl.setHorizontalHeaderLabels(hlabels)
         self.tbl.setVerticalHeaderLabels(vlabels)
-        self.tbl.setMinimumHeight(355)
+        self.tbl.setMinimumHeight(700)
         tbl_box = QHBoxLayout()
         tbl_box.addWidget(self.tbl)
         self.play_layout.addLayout(tbl_box)
