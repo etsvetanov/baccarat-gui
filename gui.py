@@ -46,7 +46,7 @@ class GUI(QWidget):
         # -----------------------------------
         mplier_lbl = QLabel('Step')
         self.mplier = QSpinBox()
-        self.mplier.setRange(2, 5)
+        self.mplier.setRange(2, 10)
         self.mplier.setMinimumHeight(50)
         self.mplier.setMinimumWidth(120)
         self.mplier.valueChanged.connect(self.update_preview)

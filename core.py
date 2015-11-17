@@ -59,7 +59,6 @@ class Game():
         for gambler in self.gamblers:
             gambler.play()
 
-
         if self.cltr:
             self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
 
