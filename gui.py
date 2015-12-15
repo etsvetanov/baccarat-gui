@@ -13,10 +13,10 @@ class GUI(QWidget):
         super().__init__()
 
         self.game = None  # TODO: self.game should be 'None' and set later when 'BEGIN' is pressed
-        self.lbl = None
+        self.display_lbl = None
         self.tbl = None
-        self.btn1 = None
-        self.btn2 = None
+        self.player_btn = None
+        self.bank_btn = None
         self.play_layout = None
         self.set_layout = None
         self.layout = None
@@ -25,10 +25,12 @@ class GUI(QWidget):
         self.mplier = None
         self.begin_btn = None
         self.preview_box = None
+        self.sim_btn = None
 
         self.initUI()
 
-    def initUI(self):
+    def settingsUI(self):
+        """this function creates the initial settings UI"""
 
         start_lbl = QLabel('Starting bet')
         self.starting_bet = QDoubleSpinBox()
@@ -57,36 +59,13 @@ class GUI(QWidget):
         self.begin_btn.setMinimumWidth(100)
         self.begin_btn.setMinimumHeight(50)
         begin_lbl = QLabel('')
+        # -----------------------------------
+        self.sim_btn = QPushButton('Simulate')
+        # self.begin_btn.clicked.connect(self.simulate)
+        self.sim_btn.setMinimumWidth(100)
+        self.sim_btn.setMinimumHeight(50)
+        sim_lbl = QLabel('')
 
-        self.btn1 = QPushButton("Player")
-        self.btn2 = QPushButton("Bank")
-        self.btn3 = QPushButton("Calculate")
-        self.btn1.clicked.connect(self.buttonClicked)
-        self.btn2.clicked.connect(self.buttonClicked)
-        self.btn3.clicked.connect(self.calculate)
-
-        for btn in [self.btn1, self.btn2, self.btn3]:
-            btn.setMinimumWidth(100)
-            btn.setMinimumHeight(70)
-            btn.setDisabled(True)
-
-        self.lbl = QLabel('  $0')
-        self.lbl.setFrameShape(QFrame.WinPanel)
-        self.lbl.setFrameShadow(QFrame.Sunken)
-        self.lbl.setMinimumHeight(30)
-        self.lbl.setMinimumWidth(160)
-        self.lbl.setStyleSheet("""
-                        .QLabel {
-                            color: red;
-                            font-size: 20px
-                        }
-                    """)
-        lbl2 = QLabel('Bet: ')
-
-        """----- Layouts ------"""
-        """ there is one main layout - VBox - layout """
-        """ and two sub-main layouts - set_layout and play_layout """
-        """ everything else is a sub layout to either of set_layout or play_layout """
         start_box = QVBoxLayout()
         start_box.addWidget(start_lbl)
         start_box.addWidget(self.starting_bet)
@@ -102,8 +81,10 @@ class GUI(QWidget):
         begin_box = QVBoxLayout()
         begin_box.addWidget(begin_lbl)
         begin_box.addWidget(self.begin_btn)
-        # a = begin_box.count()
-        # b = begin_box.itemAt(0).widget()
+
+        sim_box = QVBoxLayout()
+        sim_box.addWidget(sim_lbl)
+        sim_box.addWidget(self.sim_btn)
 
         self.preview_box = QGridLayout()
 
@@ -125,21 +106,54 @@ class GUI(QWidget):
         self.set_layout.addLayout(player_box)
         self.set_layout.addLayout(mplier_box)
         self.set_layout.addLayout(begin_box)
+        self.set_layout.addLayout(sim_box)
         self.set_layout.addLayout(level_labels_box)
         self.set_layout.addLayout(self.preview_box)
         # self.set_layout.addWidget(self.begin_btn)
         self.set_layout.addStretch(1)
 
+    def playUI(self):
+        self.player_btn = QPushButton("Player")
+        self.bank_btn = QPushButton("Bank")
+        self.calc_btn = QPushButton("Calculate")
+        self.player_btn.clicked.connect(self.button_clicked)
+        self.bank_btn.clicked.connect(self.button_clicked)
+        self.calc_btn.clicked.connect(self.calculate)
+
+        for btn in [self.player_btn, self.bank_btn, self.calc_btn]:
+            btn.setMinimumWidth(100)
+            btn.setMinimumHeight(70)
+            btn.setDisabled(True)
+
+        self.display_lbl = QLabel('  $0')
+        self.display_lbl.setFrameShape(QFrame.WinPanel)
+        self.display_lbl.setFrameShadow(QFrame.Sunken)
+        self.display_lbl.setMinimumHeight(30)
+        self.display_lbl.setMinimumWidth(160)
+        self.display_lbl.setStyleSheet("""
+                        .QLabel {
+                            color: red;
+                            font-size: 20px
+                        }
+                    """)
+
+        bet_lbl = QLabel('Bet: ')
+
+        """----- Layouts ------"""
+        """ there is one main layout - VBox - layout """
+        """ and two sub-main layouts - set_layout and play_layout """
+        """ everything else is a sub layout to either of set_layout or play_layout """
+
         lbl_box = QHBoxLayout()
-        lbl_box.addWidget(lbl2)
-        lbl_box.addWidget(self.lbl)
+        lbl_box.addWidget(bet_lbl)
+        lbl_box.addWidget(self.display_lbl)
         lbl_box.addStretch(1)
 
         btn_box = QHBoxLayout()
-        btn_box.addWidget(self.btn1)
-        btn_box.addWidget(self.btn2)
+        btn_box.addWidget(self.player_btn)
+        btn_box.addWidget(self.bank_btn)
         btn_box.addLayout(lbl_box)
-        btn_box.addWidget(self.btn3)
+        btn_box.addWidget(self.calc_btn)
         btn_box.addStretch(1)
 
         # tbl_box = QHBoxLayout()
@@ -149,6 +163,10 @@ class GUI(QWidget):
         self.play_layout.addLayout(btn_box)
         # self.play_layout.addLayout(tbl_box)
         self.play_layout.addStretch(1)
+
+    def initUI(self):
+        self.settingsUI()  # return set_layout ?
+        self.playUI()  # return play_layout?
 
         self.layout = QVBoxLayout()
         self.layout.addLayout(self.set_layout)
@@ -160,6 +178,7 @@ class GUI(QWidget):
         self.setMinimumSize(900, 600)
         self.setWindowTitle('Baccarat')
         self.show()
+
 
     # noinspection PyTypeChecker
     def update_preview(self):
@@ -177,7 +196,15 @@ class GUI(QWidget):
             item.setText(str(rows[i - 10]))
 
     def begin(self):
-        # self.starting_bet, self.p_num, self.mplier
+        self.play_layout.addLayout(self.create_table())
+
+        self.starting_bet.setDisabled(True)
+        self.p_num.setDisabled(True)
+        self.mplier.setDisabled(True)
+        self.begin_btn.setDisabled(True)
+        self.calc_btn.setDisabled(False)
+
+    def create_table(self):
         starting_bet, p_num, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
 
         factory = GameFactory(num_p=p_num, multiplier=mplier, starting_bet=starting_bet)
@@ -192,32 +219,27 @@ class GUI(QWidget):
         self.tbl.setMinimumHeight(700)
         tbl_box = QHBoxLayout()
         tbl_box.addWidget(self.tbl)
-        self.play_layout.addLayout(tbl_box)
 
-        self.starting_bet.setDisabled(True)
-        self.p_num.setDisabled(True)
-        self.mplier.setDisabled(True)
-        self.begin_btn.setDisabled(True)
-        self.btn3.setDisabled(False)
+        return tbl_box
 
-    def buttonClicked(self):
-        self.btn1.setDisabled(True)
-        self.btn2.setDisabled(True)
-        self.btn3.setDisabled(False)
+    def button_clicked(self):
+        self.player_btn.setDisabled(True)
+        self.bank_btn.setDisabled(True)
+        self.calc_btn.setDisabled(False)
         sender = self.sender()
         self.game.set_outcome(sender.text().lower())
         self.populate_table()
         # p = self.game.gamblers[-1]
-        # self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
+        # self.display_lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def calculate(self):
-        self.btn1.setDisabled(False)
-        self.btn2.setDisabled(False)
-        self.btn3.setDisabled(True)
+        self.player_btn.setDisabled(False)
+        self.bank_btn.setDisabled(False)
+        self.calc_btn.setDisabled(True)
         self.game.deal()
         self.populate_table()
         p = self.game.gamblers[-1]
-        self.lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
+        self.display_lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
         data = []
