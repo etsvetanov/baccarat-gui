@@ -9,16 +9,16 @@ from factory import GameFactory
 
 
 class GUI(QWidget):
-    def __init__(self):  # TODO: game should not be a parameter
+    def __init__(self):
         super().__init__()
 
-        self.game = None  # TODO: self.game should be 'None' and set later when 'BEGIN' is pressed
+        self.game = None
         self.display_lbl = None
         self.tbl = None
         self.player_btn = None
         self.bank_btn = None
         self.play_layout = None
-        self.set_layout = None
+        self.settings_layout = None
         self.layout = None
         self.starting_bet = None
         self.p_num = None
@@ -61,7 +61,7 @@ class GUI(QWidget):
         begin_lbl = QLabel('')
         # -----------------------------------
         self.sim_btn = QPushButton('Simulate')
-        # self.begin_btn.clicked.connect(self.simulate)
+        self.sim_btn.clicked.connect(self.simulate)
         self.sim_btn.setMinimumWidth(100)
         self.sim_btn.setMinimumHeight(50)
         sim_lbl = QLabel('')
@@ -82,15 +82,26 @@ class GUI(QWidget):
         begin_box.addWidget(begin_lbl)
         begin_box.addWidget(self.begin_btn)
 
-        sim_box = QVBoxLayout()
-        sim_box.addWidget(sim_lbl)
-        sim_box.addWidget(self.sim_btn)
+        siim_btn_box = QVBoxLayout()
+        siim_btn_box.addWidget(sim_lbl)
+        siim_btn_box.addWidget(self.sim_btn)
 
+        level_labels_box = self.previewUI()
+        self.settings_layout = QHBoxLayout()
+        self.settings_layout.addLayout(start_box)
+        self.settings_layout.addLayout(player_box)
+        self.settings_layout.addLayout(mplier_box)
+        self.settings_layout.addLayout(begin_box)
+        self.settings_layout.addLayout(siim_btn_box)
+        self.settings_layout.addLayout(level_labels_box)
+        self.settings_layout.addLayout(self.preview_box)
+        self.settings_layout.addStretch(1)
+
+    def previewUI(self):
         self.preview_box = QGridLayout()
 
         for i in range(4):
             for j in range(10):
-                # label = QLabel(str(i) + ',' + str(j))
                 label = QLabel('[' + str(j) + ']')
                 self.preview_box.addWidget(label, i, j)
 
@@ -101,17 +112,9 @@ class GUI(QWidget):
             level_labels_box.addWidget(label, i, 0)
 
         self.update_preview()
-        self.set_layout = QHBoxLayout()
-        self.set_layout.addLayout(start_box)
-        self.set_layout.addLayout(player_box)
-        self.set_layout.addLayout(mplier_box)
-        self.set_layout.addLayout(begin_box)
-        self.set_layout.addLayout(sim_box)
-        self.set_layout.addLayout(level_labels_box)
-        self.set_layout.addLayout(self.preview_box)
-        # self.set_layout.addWidget(self.begin_btn)
-        self.set_layout.addStretch(1)
-
+        
+        return level_labels_box
+        
     def playUI(self):
         self.player_btn = QPushButton("Player")
         self.bank_btn = QPushButton("Bank")
@@ -141,8 +144,8 @@ class GUI(QWidget):
 
         """----- Layouts ------"""
         """ there is one main layout - VBox - layout """
-        """ and two sub-main layouts - set_layout and play_layout """
-        """ everything else is a sub layout to either of set_layout or play_layout """
+        """ and three sub-main layouts - settings_layout, play_layout and sim_layout"""
+        """ everything else is a sub layout to these"""
 
         lbl_box = QHBoxLayout()
         lbl_box.addWidget(bet_lbl)
@@ -156,22 +159,15 @@ class GUI(QWidget):
         btn_box.addWidget(self.calc_btn)
         btn_box.addStretch(1)
 
-        # tbl_box = QHBoxLayout()
-        # tbl_box.addWidget(self.tbl)
-
         self.play_layout = QVBoxLayout()
         self.play_layout.addLayout(btn_box)
-        # self.play_layout.addLayout(tbl_box)
         self.play_layout.addStretch(1)
 
     def initUI(self):
-        self.settingsUI()  # return set_layout ?
-        self.playUI()  # return play_layout?
+        self.settingsUI()  # return settings_layout ?
 
         self.layout = QVBoxLayout()
-        self.layout.addLayout(self.set_layout)
-        self.layout.addLayout(self.play_layout)
-        # self.layout.removeItem(self.set_layout)
+        self.layout.addLayout(self.settings_layout)
         self.layout.addStretch(1)
         self.setLayout(self.layout)
         self.setGeometry(300, 300, 900, 600)
@@ -179,8 +175,6 @@ class GUI(QWidget):
         self.setWindowTitle('Baccarat')
         self.show()
 
-
-    # noinspection PyTypeChecker
     def update_preview(self):
         base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
         c = self.starting_bet.value()
@@ -196,21 +190,33 @@ class GUI(QWidget):
             item.setText(str(rows[i - 10]))
 
     def begin(self):
+        self.playUI()
+        self.layout.addLayout(self.play_layout)
         self.play_layout.addLayout(self.create_table())
 
+        self.disable_settings_ui()
+        self.calc_btn.setDisabled(False)
+
+    def simulate(self):
+        self.disable_settings_ui()
+
+    def disable_settings_ui(self):
         self.starting_bet.setDisabled(True)
         self.p_num.setDisabled(True)
         self.mplier.setDisabled(True)
         self.begin_btn.setDisabled(True)
-        self.calc_btn.setDisabled(False)
+        self.sim_btn.setDisabled(True)
 
-    def create_table(self):
-        starting_bet, p_num, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
+    def create_game(self):
+        starting_bet, num_p, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
 
-        factory = GameFactory(num_p=p_num, multiplier=mplier, starting_bet=starting_bet)
+        factory = GameFactory(num_p=num_p, multiplier=mplier, starting_bet=starting_bet)
         _, self.game = factory.create()
 
-        # GameFactory should be instanced before this
+    def create_table(self):
+        self.create_game()
+
+        # GameFactory should be instanced before this moment
         hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
         vlabels = [gambler.name for gambler in self.game.gamblers]
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
@@ -229,8 +235,6 @@ class GUI(QWidget):
         sender = self.sender()
         self.game.set_outcome(sender.text().lower())
         self.populate_table()
-        # p = self.game.gamblers[-1]
-        # self.display_lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def calculate(self):
         self.player_btn.setDisabled(False)
