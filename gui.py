@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QSpinBox, QGridLayout)
 
 from factory import GameFactory
+from core import roll
+import pyqtgraph as pg
 
 
 class GUI(QWidget):
@@ -26,7 +28,9 @@ class GUI(QWidget):
         self.begin_btn = None
         self.preview_box = None
         self.sim_btn = None
-
+        self.sim_layout = None
+        self.sim_widget = None
+        self.collector = None
         self.initUI()
 
     def settingsUI(self):
@@ -199,6 +203,27 @@ class GUI(QWidget):
 
     def simulate(self):
         self.disable_settings_ui()
+        self.create_game()
+        self.simulateUI()
+        # simulate N number of plays
+        for i in range(1000):
+            self.game.set_outcome()
+
+        self.create_graph()
+
+    def create_graph(self):
+        plot_item = self.sim_widget.getPlotItem()
+        plot_item
+
+    def simulateUI(self):
+
+        self.sim_widget = pg.PlotWidget()
+        sim_box = QVBoxLayout()
+        sim_box.addWidget(self.sim_widget)
+        sim_box.addStretch(1)
+        self.layout.addLayout(sim_box)
+
+        # plot_item.plot([1, 2, 3, 4, 5], [7, 6, 7, 8, 6], pen='r')
 
     def disable_settings_ui(self):
         self.starting_bet.setDisabled(True)
@@ -211,7 +236,7 @@ class GUI(QWidget):
         starting_bet, num_p, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
 
         factory = GameFactory(num_p=num_p, multiplier=mplier, starting_bet=starting_bet)
-        _, self.game = factory.create()
+        self.collector, self.game = factory.create()
 
     def create_table(self):
         self.create_game()

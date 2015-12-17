@@ -158,11 +158,11 @@ class BasePlayer():
         else:
             data = [partner, self.bet_choice, level, index, bet, self.res, target, self.statistics['net']]
 
-            self.cltr.push_player_data(self.name, data, append=False)
+            self.cltr.push_player_data(self.name, data, append=True)
 
     @abstractmethod
     def update(self, outcome, reward=None):
-        """Not implemented"""
+        """Must be implemented in a concrete subclass"""
 
     def join(self, table):
         table.add(self)
@@ -176,7 +176,7 @@ class BasePlayer():
 
     def play(self):
         self.bet_size = self.strategy.get_bet_size()
-        self.bet_choice = self.strategy.get_bet_choice()
+        self.bet_choice = self.strategy.get_bet_choice()  # (1) after this moment we have (bet_size, bet_choice)
         assert self.bet_size is not None
         assert self.bet_choice is not None
 
@@ -185,40 +185,6 @@ class BasePlayer():
 
 
 class Player(BasePlayer):
-
-    # def submit_data(self, pre_result=True):
-    #     if pre_result:
-    #         try:
-    #             partner = self.strategy.pair.name
-    #         except AttributeError:
-    #             partner = '--'
-    #
-    #         # try:
-    #         target = round(self.strategy.level_target, 2)
-    #         # except AttributeError:
-    #         #     target = '--'
-    #
-    #         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
-    #                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
-    #                 '- ', '- ', '- ']
-    #         self.cltr.push_player_data(self.name, data)
-    #
-    #     else:
-    #         try:
-    #             partner = self.strategy.pair.name
-    #         except AttributeError:
-    #             partner = '--'
-    #
-    #         # try:
-    #         target = round(self.strategy.level_target, 2)
-    #         # except AttributeError:
-    #         #     target = '--'
-    #
-    #         data = [partner, self.bet_choice, self.strategy.level, self.strategy.i,
-    #                 str(self.bet_size) if not self.strategy.double_up else '2*' + str(self.bet_size / 2),
-    #                 self.res, target, self.statistics['net']]
-    #
-    #         self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
         self.res = outcome

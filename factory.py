@@ -30,4 +30,4 @@ class GameFactory():
 
         tbl = Game(cltr=collector, gamblers=players + [overseer], max_rounds=100000)
 
-        return collector, tbl
+        return collector, tbl  # tbl is a game table (as in where players sit), i.e. the game object
