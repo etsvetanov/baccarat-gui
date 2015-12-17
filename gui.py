@@ -215,7 +215,7 @@ class GUI(QWidget):
     def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
         xVals = [i for i in range(1, n + 1)]
-        # yVals = [net for net in self.collector.player_data['RealPlayer']
+        # yVals = [round[] for round in self.collector.player_data['RealPlayer']]
 
     def simulateUI(self):
 
