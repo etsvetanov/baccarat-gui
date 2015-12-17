@@ -158,7 +158,7 @@ class BasePlayer():
         else:
             data = [partner, self.bet_choice, level, index, bet, self.res, target, self.statistics['net']]
 
-            self.cltr.push_player_data(self.name, data, append=True)
+            self.cltr.push_player_data(self.name, data, append=False)
 
     @abstractmethod
     def update(self, outcome, reward=None):
