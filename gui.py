@@ -206,14 +206,16 @@ class GUI(QWidget):
         self.create_game()
         self.simulateUI()
         # simulate N number of plays
-        for i in range(1000):
+        n = 1000
+        for i in range(n):
             self.game.set_outcome()
 
-        self.create_graph()
+        self.create_graph(n)
 
-    def create_graph(self):
+    def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
-        plot_item
+        xVals = [i for i in range(1, n + 1)]
+        # yVals = [net for net in self.collector.player_data['RealPlayer']
 
     def simulateUI(self):
 
