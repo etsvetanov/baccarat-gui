@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
 from factory import GameFactory
 from core import roll
 from pyqtgraph import PlotWidget
-
+from scipy.sparse.csgraph import _validation
 
 
 class GUI(QWidget):
@@ -227,8 +227,6 @@ class GUI(QWidget):
         sim_box.addWidget(self.sim_widget)
         sim_box.addStretch(1)
         self.layout.addLayout(sim_box)
-
-        # plot_item.plot([1, 2, 3, 4, 5], [7, 6, 7, 8, 6], pen='r')
 
     def disable_settings_ui(self):
         self.starting_bet.setDisabled(True)
