@@ -21,7 +21,7 @@ class Collector():
             self.player_data[name].append(data)
         else:
             self.player_data[name][-1] = data  # rewrites the last
-            print('dsadsa')
+            # print('dsadsa')
 
     def push_game_data(self, outcome):
         self.game_data.append(outcome)

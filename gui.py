@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
 
 from factory import GameFactory
 from core import roll
-import pyqtgraph as pg
+from pyqtgraph import PlotWidget
+
 
 
 class GUI(QWidget):
@@ -206,8 +207,9 @@ class GUI(QWidget):
         self.create_game()
         self.simulateUI()
         # simulate N number of plays
-        n = 1000
+        n = 100000
         for i in range(n):
+            self.game.deal()
             self.game.set_outcome()
 
         self.create_graph(n)
@@ -215,11 +217,12 @@ class GUI(QWidget):
     def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
         xVals = [i for i in range(1, n + 1)]
-        # yVals = [round[] for round in self.collector.player_data['RealPlayer']]
+        yVals = [row[7] for row in self.collector.player_data['RealPlayer']]
+        plot_item.plot(xVals, yVals, pen='r')
 
     def simulateUI(self):
 
-        self.sim_widget = pg.PlotWidget()
+        self.sim_widget = PlotWidget()
         sim_box = QVBoxLayout()
         sim_box.addWidget(self.sim_widget)
         sim_box.addStretch(1)
@@ -269,7 +272,7 @@ class GUI(QWidget):
         self.calc_btn.setDisabled(True)
         self.game.deal()
         self.populate_table()
-        p = self.game.gamblers[-1]
+        p = self.game.gamblers[-1]  # the real player bet size?
         self.display_lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 
     def populate_table(self):
