@@ -31,6 +31,8 @@ class GUI(QWidget):
         self.sim_layout = None
         self.sim_widget = None
         self.collector = None
+        self.round_num = None
+        self.go_btn = None
         self.initUI()
 
     def settingsUI(self):
@@ -208,24 +210,57 @@ class GUI(QWidget):
         # simulate N number of plays
         n = 1000
         for i in range(n):
+            self.game.deal()
             self.game.set_outcome()
 
         self.create_graph(n)
 
     def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
+        plot_item.setLabel('left', text='Net')
+        plot_item.setLabel('bottom', text='Round')
         xVals = [i for i in range(1, n + 1)]
-        # yVals = [round[] for round in self.collector.player_data['RealPlayer']]
+        yVals = [round[7] for round in self.collector.player_data['RealPlayer']]
+
+        plot_item.plot(xVals, yVals, pen='r')
+
+    def go(self):
+        pass
 
     def simulateUI(self):
-
         self.sim_widget = pg.PlotWidget()
+
+        round_num_lbl = QLabel('Number of rounds')
+        self.round_num = QSpinBox()
+        self.round_num.setRange(1000, 1000000)
+        self.round_num.setMinimumHeight(50)
+        self.round_num.setMinimumWidth(120)
+        round_num_box = QVBoxLayout()
+        round_num_box.addWidget(round_num_lbl)
+        round_num_box.addWidget(self.round_num)
+        # ------
+        go_lbl = QLabel('')
+        self.go_btn = QPushButton('Go')
+        self.go_btn.clicked.connect(self.go)
+        self.go_btn.setMinimumWidth(100)
+        self.go_btn.setMinimumHeight(50)
+        go_box = QVBoxLayout()
+        go_box.addWidget(go_lbl)
+        go_box.addWidget(self.go_btn)
+
+
+        sim_settings_box = QHBoxLayout()
+        sim_settings_box.addLayout(round_num_box)
+        sim_settings_box.addLayout(go_box)
+        sim_settings_box.addStretch(1)
+
         sim_box = QVBoxLayout()
+        sim_box.addLayout(sim_settings_box)  # its a layout not a widget!
         sim_box.addWidget(self.sim_widget)
         sim_box.addStretch(1)
+
         self.layout.addLayout(sim_box)
 
-        # plot_item.plot([1, 2, 3, 4, 5], [7, 6, 7, 8, 6], pen='r')
 
     def disable_settings_ui(self):
         self.starting_bet.setDisabled(True)
