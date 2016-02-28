@@ -3,7 +3,11 @@ from math import floor
 from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QLabel, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QHBoxLayout, QFrame, QDoubleSpinBox,
-                             QSpinBox, QGridLayout)
+                             QSpinBox, QGridLayout, QProgressBar, qApp)
+
+
+
+
 
 from factory import GameFactory
 from core import roll
@@ -33,6 +37,7 @@ class GUI(QWidget):
         self.collector = None
         self.round_num = None
         self.go_btn = None
+        self.round_prog_bar = None
         self.initUI()
 
     def settingsUI(self):
@@ -208,12 +213,8 @@ class GUI(QWidget):
         self.create_game()
         self.simulateUI()
         # simulate N number of plays
-        n = 1000
-        for i in range(n):
-            self.game.deal()
-            self.game.set_outcome()
 
-        self.create_graph(n)
+
 
     def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
@@ -225,7 +226,16 @@ class GUI(QWidget):
         plot_item.plot(xVals, yVals, pen='r')
 
     def go(self):
-        pass
+        self.go_btn.setDisabled(True)
+        n = self.round_num.value()
+        self.round_prog_bar.setMaximum(n)
+        for i in range(n):
+            self.round_prog_bar.setValue(i+1)
+            self.game.deal()
+            self.game.set_outcome()
+            qApp.processEvents()  # I have no idea what this does but it's working! see: http://stackoverflow.com/questions/21886260/python-ui-gets-unresponsive-after-long-run
+
+        self.create_graph(n)
 
     def simulateUI(self):
         self.sim_widget = pg.PlotWidget()
@@ -235,6 +245,7 @@ class GUI(QWidget):
         self.round_num.setRange(1000, 1000000)
         self.round_num.setMinimumHeight(50)
         self.round_num.setMinimumWidth(120)
+        self.round_num.setSingleStep(1000)
         round_num_box = QVBoxLayout()
         round_num_box.addWidget(round_num_lbl)
         round_num_box.addWidget(self.round_num)
@@ -247,17 +258,30 @@ class GUI(QWidget):
         go_box = QVBoxLayout()
         go_box.addWidget(go_lbl)
         go_box.addWidget(self.go_btn)
+        # ------
+        prog_bar_lbl = QLabel('Progess')
+        # prog_bar_lbl.setAlignment(Qt.AlignBottom)
+        self.round_prog_bar = QProgressBar()
+        self.round_prog_bar.setMinimumHeight(50)
+        # self.round_prog_bar.setMinimumWidth(200)
+        prog_bar_box = QVBoxLayout()
+        prog_bar_box.addWidget(prog_bar_lbl)
+        prog_bar_box.addWidget(self.round_prog_bar)
+        # ------
 
 
         sim_settings_box = QHBoxLayout()
         sim_settings_box.addLayout(round_num_box)
         sim_settings_box.addLayout(go_box)
-        sim_settings_box.addStretch(1)
+        sim_settings_box.addLayout(prog_bar_box)
+        # sim_settings_box.addWidget(self.round_prog_bar)
+        # sim_settings_box.addStretch(1)
 
         sim_box = QVBoxLayout()
         sim_box.addLayout(sim_settings_box)  # its a layout not a widget!
         sim_box.addWidget(self.sim_widget)
         sim_box.addStretch(1)
+
 
         self.layout.addLayout(sim_box)
 

@@ -11,3 +11,9 @@ if __name__ == '__main__':
     ex = GUI()
     sys.exit(app.exec_())
 
+
+
+# TODO: add unit tests
+# TODO: add a progress bar/counter for simulation [x]
+# TODO: add excel export function
+# TODO: add a light-weight simulation (collect only net?)
