@@ -1,5 +1,3 @@
-# import plotly.plotly as py
-# from plotly.graph_objs import Scatter, Data
 from abc import ABCMeta, abstractmethod
 from random import randint
 
@@ -54,31 +52,16 @@ class Game():
 
         self.notify_observers()
 
+        if self.cltr:
+            self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
+
     def deal(self):
         self.round += 1
         for gambler in self.gamblers:
             gambler.play()
 
-        if self.cltr:
-            self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
 
-    # def set_outcome(self, outcome=None):
-    #
-    #     # print('Round:', self.round)
-    #     self.round += 1
-    #     for gambler in self.gamblers:
-    #         gambler.play()
-    #     # print(outcome)
-    #
-    #     if outcome:
-    #         self.outcome = outcome
-    #     else:
-    #         self.outcome = self.roll()
-    #
-    #     if self.cltr:
-    #         self.submit_data()  # TODO: decentralize submit_data (submit each value from where it should be submitted)
-    #
-    #     self.notify_observers()
+
 
     def notify_observers(self):
         assert self.outcome is not None
@@ -92,24 +75,6 @@ class Game():
                 gambler.update(outcome='win', reward=amount)
             else:
                 gambler.update(outcome='loss')
-
-    # def plotz(self):
-    #     print('plotting the results...')
-    #     py.sign_in(username='etsvetanov', api_key='nsyswe1pg2')
-    #     traces = []
-    #     num_of_rounds = len(self.gamblers[0].net_list)
-    #     x = [i for i in range(num_of_rounds)]
-    #
-    #     for gambler in self.gamblers:
-    #         trace = Scatter(name=gambler.name, x=x, y=gambler.net_list)
-    #         traces.append(trace)
-    #
-    #     y_net_list = [trace['y'] for trace in traces]
-    #     y_net_total = [sum(amounts) for amounts in zip(*y_net_list)]
-    #     total_trace = Scatter(name='Total', x=x, y=y_net_total)
-    #     traces.append(total_trace)
-    #     data = Data(traces)
-    #     unique_url = py.plot(data, filename='graph')
 
 
 class BasePlayer():
@@ -213,16 +178,6 @@ class Overseer(BasePlayer):
     """
     def __init__(self, strategy, name, cltr=None):
         BasePlayer.__init__(self, strategy, name, cltr)
-
-    # def submit_data(self):
-    #     """
-    #     submit_data is dependent on the the strategy.
-    #     submit_data can be implemented by a single "Player" class and checking for the presence
-    #     of "strategy" attributes
-    #     """
-    #     data = ['--', self.bet_choice, '--', '--', self.bet_size,
-    #             self.res, '--', self.statistics['net']]
-    #     self.cltr.push_player_data(self.name, data)
 
     def update(self, outcome, reward=None):
         self.res = outcome

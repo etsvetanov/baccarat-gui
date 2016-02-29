@@ -4,12 +4,13 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 from datetime import datetime
 from itertools import chain
-
+from os import path
 
 class Collector():
     def __init__(self):
         self.player_data = defaultdict(list)
         self.game_data = []
+        self.player_data_columns = ['partner', 'play', 'level', 'index', 'bet', 'res', 'target', 'net']
 
     def push_player_data(self, name, data, append=True):
         """
@@ -33,14 +34,16 @@ class SpreadSheet():
         self.players = list(cltr.player_data.keys())
         self.wb = Workbook()
         self.ws = self.wb.active
-        self.columns = ['play', 'level', 'index', 'bet', 'outcome', 'net']
+        self.columns = cltr.player_data_columns
 
     def create_spreadsheet(self):
         self.init_spreadsheet()
         self.write()
         dt = datetime.now()
         stamp = '-'.join([str(dt.year), str(dt.month), str(dt.day), str(dt.hour), str(dt.minute), str(dt.second)])
-        self.wb.save('graph-' + stamp + '.xlsx')
+        desktop_path = path.expanduser('~')
+        desktop_path += "\\Desktop\\"
+        self.wb.save(desktop_path + 'graph-' + stamp + '.xlsx')
 
     def init_spreadsheet(self):
         self.ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=2)
@@ -62,6 +65,7 @@ class SpreadSheet():
 
         for outcome, row in zip(self.cltr.game_data, rows):
             self.ws.append(outcome + list(row))
+
 
         # for i in range(len(self.gamblers) + 1):
         #     cell = self.ws.cell(row=len(self.ws.rows), column=2 + (6 * i))
