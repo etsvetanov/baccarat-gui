@@ -1,21 +1,29 @@
-__author__ = 'etsvetanov'
 from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QLabel, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QHBoxLayout, QFrame, QDoubleSpinBox,
-                             QSpinBox, QGridLayout, QProgressBar, qApp, QCheckBox)
+                             QSpinBox, QGridLayout, QProgressBar, qApp, QCheckBox,
+                             QDialog)
+
+from PyQt5.QtCore import pyqtSlot
+
 from PyQt5.QtCore import Qt
 from factory import GameFactory
 from data_visualization import SpreadSheet
 import pyqtgraph as pg
+
+COLUMNS = 'columns'
 
 
 class GUI(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.options_dic = {}
+
         self.game = None
         self.display_lbl = None
         self.tbl = None
+        self.calc_btn = None
         self.player_btn = None
         self.bank_btn = None
         self.play_layout = None
@@ -34,6 +42,8 @@ class GUI(QWidget):
         self.go_btn = None
         self.round_prog_bar = None
         self.sheet_tick = None
+        self.options_btn = None
+        self.columns = None
         self.initUI()
 
     def settingsUI(self):
@@ -61,6 +71,12 @@ class GUI(QWidget):
         self.mplier.valueChanged.connect(self.update_preview)
         self.mplier.setToolTip('The starting bet is multiplied by this value for each consecutive level')
         # -----------------------------------
+        self.options_btn = QPushButton('Options')
+        self.options_btn.clicked.connect(self.options)
+        self.options_btn.setMinimumWidth(100)
+        self.options_btn.setMinimumHeight(50)
+        options_lbl = QLabel('')
+        # -----------------------------------
         self.begin_btn = QPushButton('Begin')
         self.begin_btn.clicked.connect(self.begin)
         self.begin_btn.setMinimumWidth(100)
@@ -85,6 +101,10 @@ class GUI(QWidget):
         mplier_box.addWidget(mplier_lbl)
         mplier_box.addWidget(self.mplier)
 
+        options_box = QVBoxLayout()
+        options_box.addWidget(options_lbl)
+        options_box.addWidget(self.options_btn)
+
         begin_box = QVBoxLayout()
         begin_box.addWidget(begin_lbl)
         begin_box.addWidget(self.begin_btn)
@@ -98,6 +118,7 @@ class GUI(QWidget):
         self.settings_layout.addLayout(start_box)
         self.settings_layout.addLayout(player_box)
         self.settings_layout.addLayout(mplier_box)
+        self.settings_layout.addLayout(options_box)
         self.settings_layout.addLayout(begin_box)
         self.settings_layout.addLayout(siim_btn_box)
         self.settings_layout.addLayout(level_labels_box)
@@ -126,8 +147,8 @@ class GUI(QWidget):
         self.player_btn = QPushButton("Player")
         self.bank_btn = QPushButton("Bank")
         self.calc_btn = QPushButton("Calculate")
-        self.player_btn.clicked.connect(self.button_clicked)
-        self.bank_btn.clicked.connect(self.button_clicked)
+        self.player_btn.clicked.connect(self.choice_button_clicked)
+        self.bank_btn.clicked.connect(self.choice_button_clicked)
         self.calc_btn.clicked.connect(self.calculate)
 
         for btn in [self.player_btn, self.bank_btn, self.calc_btn]:
@@ -170,8 +191,21 @@ class GUI(QWidget):
         self.play_layout.addLayout(btn_box)
         self.play_layout.addStretch(1)
 
+    def init_options(self):
+        self.options_dic[COLUMNS] = {}
+        self.columns = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
+        self.options_dic[COLUMNS]['partner'] = False
+        self.options_dic[COLUMNS]['play'] = False
+        self.options_dic[COLUMNS]['level'] = True
+        self.options_dic[COLUMNS]['index'] = True
+        self.options_dic[COLUMNS]['bet'] = False
+        self.options_dic[COLUMNS]['result'] = False
+        self.options_dic[COLUMNS]['target'] = True
+        self.options_dic[COLUMNS]['net'] = True
+
     def initUI(self):
         self.settingsUI()  # return settings_layout ?
+        self.init_options()
 
         self.layout = QVBoxLayout()
         self.layout.addLayout(self.settings_layout)
@@ -209,8 +243,6 @@ class GUI(QWidget):
         self.create_game()
         self.simulateUI()
         # simulate N number of plays
-
-
 
     def create_graph(self, n):
         plot_item = self.sim_widget.getPlotItem()
@@ -277,27 +309,21 @@ class GUI(QWidget):
         prog_bar_box.addWidget(prog_bar_lbl)
         prog_bar_box.addWidget(self.round_prog_bar)
         # ------
-
-
         sim_settings_box = QHBoxLayout()
         sim_settings_box.addLayout(round_num_box)
         sim_settings_box.addLayout(sheet_tick_box)
         sim_settings_box.addLayout(go_box)
         sim_settings_box.addLayout(prog_bar_box)
 
-        # sim_settings_box.addWidget(self.round_prog_bar)
-        # sim_settings_box.addStretch(1)
-
         sim_box = QVBoxLayout()
         sim_box.addLayout(sim_settings_box)  # its a layout not a widget!
         sim_box.addWidget(self.sim_widget)
         sim_box.addStretch(1)
 
-
         self.layout.addLayout(sim_box)
 
-
     def disable_settings_ui(self):
+        self.options_btn.setDisabled(True)
         self.starting_bet.setDisabled(True)
         self.p_num.setDisabled(True)
         self.mplier.setDisabled(True)
@@ -308,13 +334,15 @@ class GUI(QWidget):
         starting_bet, num_p, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
 
         factory = GameFactory(num_p=num_p, multiplier=mplier, starting_bet=starting_bet)
-        self.collector, self.game = factory.create()
+        self.collector, self.game = factory.create(self.columns)
 
     def create_table(self):
         self.create_game()
 
         # GameFactory should be instanced before this moment
-        hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
+        # hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
+        hlabels = [column for column in self.columns
+                   if self.options_dic[COLUMNS][column] == True]
         vlabels = [gambler.name for gambler in self.game.gamblers]
         self.tbl = QTableWidget(len(vlabels), len(hlabels))
         self.tbl.setHorizontalHeaderLabels(hlabels)
@@ -325,7 +353,7 @@ class GUI(QWidget):
 
         return tbl_box
 
-    def button_clicked(self):
+    def choice_button_clicked(self):
         self.player_btn.setDisabled(True)
         self.bank_btn.setDisabled(True)
         self.calc_btn.setDisabled(False)
@@ -345,12 +373,66 @@ class GUI(QWidget):
     def populate_table(self):
         data = []
         for g in self.game.gamblers:
-            row = self.game.cltr.player_data[g.name][-1]
+            row_data = self.game.cltr.player_data[g.name][-1]
+            row = [row_data[i] for i in range(len(row_data))
+                   if self.options_dic[COLUMNS][self.columns[i]] == True]
             data.append(row)
 
         for i in range(len(data)):
             for j in range(len(data[i])):
                 self.tbl.setItem(i, j, QTableWidgetItem(str(data[i][j])))
 
+    def options(self):
+        a = OptionsDialog(self)
+        ID = id(self.options_dic['columns'])
+        result = a.exec()
+
+        print(result)
 
 
+class OptionsDialog(QDialog):
+    def __init__(self, main_window):
+        super().__init__()
+        self.options_dic = main_window.options_dic
+        ID = id(self.options_dic)
+        self.layout = None
+        self.ok_layout = None
+        self.initUI()
+
+    def initUI(self):
+        self.layout = QVBoxLayout()
+        self.optionsUI()
+
+        ok_btn = QPushButton('Ok')
+        ok_btn.setMinimumWidth(100)
+        ok_btn.setMinimumHeight(50)
+        ok_btn.setDefault(True)
+        ok_btn.clicked.connect(self.accept)
+        self.ok_layout = QHBoxLayout()
+        self.ok_layout.addWidget(ok_btn)
+        self.ok_layout.addStretch(1)
+        self.layout.addLayout(self.ok_layout)
+        self.layout.addStretch(1)
+        self.setLayout(self.layout)
+        self.setGeometry(300, 300, 900, 600)
+        self.setMinimumSize(900, 600)
+
+    def optionsUI(self):
+
+        columns_layout = QVBoxLayout()
+        columns_lbl = QLabel('Columns')
+        columns_layout.addWidget(columns_lbl)
+
+        for column, enabled in sorted(self.options_dic['columns'].items()):
+            check_box = QCheckBox(column)
+            check_box.setChecked(enabled)
+            check_box.clicked.connect(self.set_option)
+            columns_layout.addWidget(check_box)
+
+        self.layout.addLayout(columns_layout)
+
+    @pyqtSlot(bool)
+    def set_option(self, enabled):
+        column = self.sender().text()
+        self.options_dic['columns'][column] = enabled
+        print(1)

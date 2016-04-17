@@ -1,4 +1,3 @@
-__author__ = 'evgeni'
 from collections import defaultdict
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
@@ -6,14 +5,17 @@ from datetime import datetime
 from itertools import chain
 from os import path
 
-class Collector():
-    def __init__(self):
+
+class Collector:
+    def __init__(self, player_data_columns):
         self.player_data = defaultdict(list)
         self.game_data = []
-        self.player_data_columns = ['partner', 'play', 'level', 'index', 'bet', 'res', 'target', 'net']
+        # self.player_data_columns = ['partner', 'play', 'level', 'index', 'bet', 'res', 'target', 'net']
+        # self.columns = player_data_columns
 
     def push_player_data(self, name, data, append=True):
         """
+        :param append:
         :param name: name of the player
         :param data: the data itself
         data = [partner, bet_choice, level, index, bet_size, res, net]
@@ -28,7 +30,7 @@ class Collector():
         self.game_data.append(outcome)
 
 
-class SpreadSheet():
+class SpreadSheet:
     def __init__(self, cltr):
         self.cltr = cltr
         self.players = list(cltr.player_data.keys())

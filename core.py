@@ -60,9 +60,6 @@ class Game():
         for gambler in self.gamblers:
             gambler.play()
 
-
-
-
     def notify_observers(self):
         assert self.outcome is not None
 
@@ -77,7 +74,7 @@ class Game():
                 gambler.update(outcome='loss')
 
 
-class BasePlayer():
+class BasePlayer:
     __metaclass__ = ABCMeta
 
     def __init__(self, strategy, name, cltr=None):
@@ -335,6 +332,7 @@ class PairStrategy(SingleStrategy):
         """
         go to a higher level if you loose the last bet in the row
         or go to level 0 if you win back the cumulative amount lost
+        :param increase: player level is increased when True
         """
         if increase:
             self.level += 1
