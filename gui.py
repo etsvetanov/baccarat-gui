@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QLabel, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QHBoxLayout, QFrame, QDoubleSpinBox,
                              QSpinBox, QGridLayout, QProgressBar, qApp, QCheckBox,
-                             QDialog)
+                             QDialog, QComboBox, QStyledItemDelegate)
 
 from PyQt5.QtCore import pyqtSlot
 
@@ -12,6 +12,29 @@ from data_visualization import SpreadSheet
 import pyqtgraph as pg
 
 COLUMNS = 'columns'
+
+
+class BigButton(QPushButton):
+    def __init__(self, text):
+        QPushButton.__init__(self, text)
+        self.setMinimumWidth(100)
+        self.setMinimumHeight(50)
+
+
+class BigSpinBox(QSpinBox):
+    def __init__(self):
+        QSpinBox.__init__(self)
+        self.setMinimumWidth(100)
+        self.setMinimumHeight(50)
+
+
+class BigDoubleSpinBox(QDoubleSpinBox):
+    def __init__(self):
+        QDoubleSpinBox.__init__(self)
+        self.setMinimumHeight(50)
+        self.setMinimumWidth(120)
+        self.setMaximumHeight(50)
+        self.setMaximumWidth(120)
 
 
 class GUI(QWidget):
@@ -29,9 +52,9 @@ class GUI(QWidget):
         self.play_layout = None
         self.settings_layout = None
         self.layout = None
-        self.starting_bet = None
-        self.p_num = None
-        self.mplier = None
+        self.starting_bet = 0.01
+        self.p_num = 1
+        self.mplier = 2
         self.begin_btn = None
         self.preview_box = None
         self.sim_btn = None
@@ -49,29 +72,7 @@ class GUI(QWidget):
     def settingsUI(self):
         """this function creates the initial settings UI"""
 
-        start_lbl = QLabel('Starting bet')
-        self.starting_bet = QDoubleSpinBox()
-        self.starting_bet.setRange(0.1, 100)
-        self.starting_bet.setSingleStep(0.1)
-        self.starting_bet.setMinimumHeight(50)
-        self.starting_bet.setMinimumWidth(120)
-        self.starting_bet.valueChanged.connect(self.update_preview)
-        # ----------------------------------
-        p_num_lbl = QLabel('Number of pairs')
-        self.p_num = QSpinBox()
-        self.p_num.setRange(1, 10)
-        self.p_num.setMinimumHeight(50)
-        self.p_num.setMinimumWidth(120)
-        # -----------------------------------
-        mplier_lbl = QLabel('Step')
-        self.mplier = QSpinBox()
-        self.mplier.setRange(2, 10)
-        self.mplier.setMinimumHeight(50)
-        self.mplier.setMinimumWidth(120)
-        self.mplier.valueChanged.connect(self.update_preview)
-        self.mplier.setToolTip('The starting bet is multiplied by this value for each consecutive level')
-        # -----------------------------------
-        self.options_btn = QPushButton('Options')
+        self.options_btn = BigButton('Options')
         self.options_btn.clicked.connect(self.options)
         self.options_btn.setMinimumWidth(100)
         self.options_btn.setMinimumHeight(50)
@@ -89,17 +90,7 @@ class GUI(QWidget):
         self.sim_btn.setMinimumHeight(50)
         sim_lbl = QLabel('')
 
-        start_box = QVBoxLayout()
-        start_box.addWidget(start_lbl)
-        start_box.addWidget(self.starting_bet)
 
-        player_box = QVBoxLayout()
-        player_box.addWidget(p_num_lbl)
-        player_box.addWidget(self.p_num)
-
-        mplier_box = QVBoxLayout()
-        mplier_box.addWidget(mplier_lbl)
-        mplier_box.addWidget(self.mplier)
 
         options_box = QVBoxLayout()
         options_box.addWidget(options_lbl)
@@ -113,36 +104,13 @@ class GUI(QWidget):
         siim_btn_box.addWidget(sim_lbl)
         siim_btn_box.addWidget(self.sim_btn)
 
-        level_labels_box = self.previewUI()
         self.settings_layout = QHBoxLayout()
-        self.settings_layout.addLayout(start_box)
-        self.settings_layout.addLayout(player_box)
-        self.settings_layout.addLayout(mplier_box)
         self.settings_layout.addLayout(options_box)
         self.settings_layout.addLayout(begin_box)
         self.settings_layout.addLayout(siim_btn_box)
-        self.settings_layout.addLayout(level_labels_box)
         self.settings_layout.addLayout(self.preview_box)
         self.settings_layout.addStretch(1)
 
-    def previewUI(self):
-        self.preview_box = QGridLayout()
-
-        for i in range(4):
-            for j in range(10):
-                label = QLabel('[' + str(j) + ']')
-                self.preview_box.addWidget(label, i, j)
-
-        level_labels_box = QGridLayout()
-        level_labels_box.addWidget(QLabel(''), 0, 0)
-        for i in range(1, 4):
-            label = QLabel('Level' + str(i))
-            level_labels_box.addWidget(label, i, 0)
-
-        self.update_preview()
-        
-        return level_labels_box
-        
     def playUI(self):
         self.player_btn = QPushButton("Player")
         self.bank_btn = QPushButton("Bank")
@@ -215,20 +183,6 @@ class GUI(QWidget):
         self.setMinimumSize(900, 600)
         self.setWindowTitle('Baccarat')
         self.show()
-
-    def update_preview(self):
-        base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
-        c = self.starting_bet.value()
-        rows = []
-        for j in range(3):
-            row = [i * c * self.mplier.value() ** j for i in base_row]
-            row = [round(i, 2) for i in row]
-            rows += row
-
-        child_num = self.preview_box.count()
-        for i in range(10, child_num):
-            item = self.preview_box.itemAt(i).widget()
-            item.setText(str(rows[i - 10]))
 
     def begin(self):
         self.playUI()
@@ -324,14 +278,11 @@ class GUI(QWidget):
 
     def disable_settings_ui(self):
         self.options_btn.setDisabled(True)
-        self.starting_bet.setDisabled(True)
-        self.p_num.setDisabled(True)
-        self.mplier.setDisabled(True)
         self.begin_btn.setDisabled(True)
         self.sim_btn.setDisabled(True)
 
     def create_game(self):
-        starting_bet, num_p, mplier = self.starting_bet.value(), self.p_num.value(), self.mplier.value()
+        starting_bet, num_p, mplier = self.starting_bet, self.p_num, self.mplier
 
         factory = GameFactory(num_p=num_p, multiplier=mplier, starting_bet=starting_bet)
         self.collector, self.game = factory.create(self.columns)
@@ -339,8 +290,7 @@ class GUI(QWidget):
     def create_table(self):
         self.create_game()
 
-        # GameFactory should be instanced before this moment
-        # hlabels = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
+        # GameFactory should be instantiated before this moment!
         hlabels = [column for column in self.columns
                    if self.options_dic[COLUMNS][column] == True]
         vlabels = [gambler.name for gambler in self.game.gamblers]
@@ -384,40 +334,128 @@ class GUI(QWidget):
 
     def options(self):
         a = OptionsDialog(self)
-        ID = id(self.options_dic['columns'])
         result = a.exec()
-
-        print(result)
 
 
 class OptionsDialog(QDialog):
     def __init__(self, main_window):
+        # todo: try to replace .main reference with .parent
         super().__init__()
+
+        self.main = main_window
         self.options_dic = main_window.options_dic
-        ID = id(self.options_dic)
         self.layout = None
-        self.ok_layout = None
+        self.starting_bet = None
+        self.p_num = None
+        self.mplier = None
+        self.preview_box = None
         self.initUI()
 
     def initUI(self):
         self.layout = QVBoxLayout()
-        self.optionsUI()
 
-        ok_btn = QPushButton('Ok')
-        ok_btn.setMinimumWidth(100)
-        ok_btn.setMinimumHeight(50)
-        ok_btn.setDefault(True)
-        ok_btn.clicked.connect(self.accept)
-        self.ok_layout = QHBoxLayout()
-        self.ok_layout.addWidget(ok_btn)
-        self.ok_layout.addStretch(1)
-        self.layout.addLayout(self.ok_layout)
+        # ---------------------------------------
+        strategy_box = self.create_box_strategy()
+        box_mplier = self.create_box_mplier()
+        box_p_num = self.create_box_p_num()
+        box_starting_bet = self.create_box_starting_bet()
+        box_preview = self.create_box_preview()
+
+        param_spin_box = QVBoxLayout()
+        param_spin_box.addLayout(box_mplier)
+        param_spin_box.addLayout(box_p_num)
+        param_spin_box.addLayout(box_starting_bet)
+        param_spin_box.addStretch(1)
+
+        param_box = QHBoxLayout()
+        param_box.addLayout(param_spin_box)
+        param_box.insertSpacing(1, 30)
+        param_box.addLayout(box_preview)
+        # param_box.addStretch(1)
+        self.layout.addLayout(strategy_box)
+        self.layout.addLayout(param_box)
+        # ----------------------------------------
+        self.create_box_columns_options()
+        self.create_box_ok()
+
         self.layout.addStretch(1)
         self.setLayout(self.layout)
-        self.setGeometry(300, 300, 900, 600)
-        self.setMinimumSize(900, 600)
 
-    def optionsUI(self):
+        self.setGeometry(300, 300, 550, 600)
+        self.setMinimumSize(550, 600)
+
+    def create_box_starting_bet(self):
+        start_lbl = QLabel('Starting bet')
+        self.starting_bet = BigDoubleSpinBox()
+        self.starting_bet.setRange(0.01, 100)
+        self.starting_bet.setValue(self.main.starting_bet)
+        self.starting_bet.setSingleStep(0.1)
+        self.starting_bet.valueChanged.connect(self.update_preview)
+
+        start_box = QVBoxLayout()
+        start_box.addWidget(start_lbl)
+        start_box.addWidget(self.starting_bet)
+
+        # self.layout.addLayout(start_box)
+        return start_box
+
+    def create_box_p_num(self):
+        p_num_lbl = QLabel('Number of pairs')
+        self.p_num = BigDoubleSpinBox()
+        self.p_num.setRange(1, 10)
+        self.p_num.setValue(self.main.p_num)
+        self.p_num.valueChanged.connect(self.update_preview)
+        self.p_num.valueChanged.connect(lambda: self.update_parameter('p_num'))
+
+        player_box = QVBoxLayout()
+        player_box.addWidget(p_num_lbl)
+        player_box.addWidget(self.p_num)
+        player_box.addStretch(1)
+
+        # self.layout.addLayout(player_box)
+        return player_box
+
+    def create_box_mplier(self):
+        mplier_lbl = QLabel('Step')
+        self.mplier = BigDoubleSpinBox()
+        self.mplier.setRange(2, 10)
+
+        self.mplier.setValue(self.main.mplier)
+        self.mplier.valueChanged.connect(self.update_preview)
+        self.mplier.valueChanged.connect(lambda: self.update_parameter('mplier'))
+        self.mplier.setToolTip('The starting bet is multiplied by this value for each consecutive level')
+
+        mplier_box = QVBoxLayout()
+        mplier_box.addWidget(mplier_lbl)
+        mplier_box.addWidget(self.mplier)
+
+        # self.layout.addLayout(mplier_box)
+        return mplier_box
+
+    def update_parameter(self, target):
+        value = self.sender().value()
+        setattr(self.main, target, int(value))
+
+    def create_box_strategy(self):
+        self.strategy_choice = QComboBox()
+        itemDelegate = QStyledItemDelegate()
+        self.strategy_choice.setItemDelegate(itemDelegate)
+        style = """
+            QAbstractItemView::item {
+                font-size: 20px
+            }
+        """
+        self.strategy_choice.setStyleSheet(style)
+        self.strategy_choice.setMinimumHeight(30)
+        self.strategy_choice.insertItem(0, 'SomeStrategy')
+        self.strategy_choice.insertItem(1, 'SomeStrateg2y')
+
+        strategy_box = QHBoxLayout()
+        strategy_box.addWidget(self.strategy_choice)
+        strategy_box.addStretch(1)
+        return strategy_box
+
+    def create_box_columns_options(self):
 
         columns_layout = QVBoxLayout()
         columns_lbl = QLabel('Columns')
@@ -436,3 +474,53 @@ class OptionsDialog(QDialog):
         column = self.sender().text()
         self.options_dic['columns'][column] = enabled
         print(1)
+
+    def update_preview(self):
+        base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
+        c = self.starting_bet.value()
+        rows = []
+        for j in range(3):
+            row = [i * c * self.mplier.value() ** j for i in base_row]
+            row = [round(i, 2) for i in row]
+            rows += row
+
+        child_num = self.preview_box.count()
+        for i in range(10, child_num):
+            item = self.preview_box.itemAt(i).widget()
+            item.setText(str(rows[i - 10]))
+
+    def create_box_ok(self):
+        ok_btn = QPushButton('Ok')
+        ok_btn.setMinimumWidth(100)
+        ok_btn.setMinimumHeight(50)
+        ok_btn.setDefault(True)
+        ok_btn.clicked.connect(self.accept)
+        ok_box = QHBoxLayout()
+        ok_box.addWidget(ok_btn)
+        ok_box.addStretch(1)
+
+        self.layout.addLayout(ok_box)
+
+    def create_box_preview(self):
+        self.preview_box = QGridLayout()
+        for i in range(4):
+            for j in range(10):
+                label = QLabel('[' + str(j) + ']')
+                self.preview_box.addWidget(label, i, j)
+
+        level_labels_box = QGridLayout()
+        level_labels_box.addWidget(QLabel(''), 0, 0)
+        for i in range(1, 4):
+            label = QLabel('Level' + str(i))
+            level_labels_box.addWidget(label, i, 0)
+
+        self.update_preview()
+
+        container_box = QHBoxLayout()
+        container_box.addLayout(level_labels_box)
+        container_box.addLayout(self.preview_box)
+        container_box.addStretch(1)
+        some_vertical_box = QVBoxLayout()
+        some_vertical_box.addLayout(container_box)
+        some_vertical_box.addStretch(1)
+        return some_vertical_box
