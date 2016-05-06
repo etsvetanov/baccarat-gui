@@ -1,5 +1,6 @@
 from core import *
 from data_visualization import *
+from strategies import PairStrategy, OverseerStrategy
 
 
 class GameFactory:

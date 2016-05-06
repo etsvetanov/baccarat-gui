@@ -1,4 +1,4 @@
-from gui import GUI
+from gui import MainWindow
 from PyQt5.QtWidgets import QApplication
 import sys
 
@@ -6,7 +6,7 @@ import sys
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    ex = GUI()
+    ex = MainWindow()
     sys.exit(app.exec_())
 
     # TODO: add a reset button (begin a new game)

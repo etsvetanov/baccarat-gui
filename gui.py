@@ -5,10 +5,11 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QDialog, QComboBox, QStyledItemDelegate)
 
 from PyQt5.QtCore import pyqtSlot
-
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from factory import GameFactory
 from data_visualization import SpreadSheet
+import strategies
+import inspect
 import pyqtgraph as pg
 
 COLUMNS = 'columns'
@@ -37,7 +38,7 @@ class BigDoubleSpinBox(QDoubleSpinBox):
         self.setMaximumWidth(120)
 
 
-class GUI(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -376,7 +377,8 @@ class OptionsDialog(QDialog):
         self.layout.addLayout(param_box)
         # ----------------------------------------
         self.create_box_columns_options()
-        self.create_box_ok()
+        ok_box = self.create_box_ok()
+        self.layout.addLayout(ok_box)
 
         self.layout.addStretch(1)
         self.setLayout(self.layout)
@@ -437,16 +439,14 @@ class OptionsDialog(QDialog):
         setattr(self.main, target, int(value))
 
     def create_box_strategy(self):
+        ls = [m[0] for m in inspect.getmembers(strategies, inspect.isclass)]  # if m[1].__module__ == 'strategies']
+
         self.strategy_choice = QComboBox()
-        itemDelegate = QStyledItemDelegate()
-        self.strategy_choice.setItemDelegate(itemDelegate)
-        style = """
-            QAbstractItemView::item {
-                font-size: 20px
-            }
-        """
-        self.strategy_choice.setStyleSheet(style)
-        self.strategy_choice.setMinimumHeight(30)
+        font = QFont()
+        font.setPointSize(font.pointSize() + 10)
+        self.strategy_choice.setFont(font)
+
+        self.strategy_choice.highlighted[str].connect(self.strategy_selected)
         self.strategy_choice.insertItem(0, 'SomeStrategy')
         self.strategy_choice.insertItem(1, 'SomeStrateg2y')
 
@@ -454,6 +454,10 @@ class OptionsDialog(QDialog):
         strategy_box.addWidget(self.strategy_choice)
         strategy_box.addStretch(1)
         return strategy_box
+
+    def strategy_selected(self, strategy):
+        print(strategy)
+        pass
 
     def create_box_columns_options(self):
 
@@ -490,16 +494,15 @@ class OptionsDialog(QDialog):
             item.setText(str(rows[i - 10]))
 
     def create_box_ok(self):
-        ok_btn = QPushButton('Ok')
-        ok_btn.setMinimumWidth(100)
-        ok_btn.setMinimumHeight(50)
+        ok_btn = BigButton('Ok')
         ok_btn.setDefault(True)
         ok_btn.clicked.connect(self.accept)
         ok_box = QHBoxLayout()
         ok_box.addWidget(ok_btn)
         ok_box.addStretch(1)
 
-        self.layout.addLayout(ok_box)
+        return ok_box
+        # self.layout.addLayout(ok_box)
 
     def create_box_preview(self):
         self.preview_box = QGridLayout()
