@@ -14,6 +14,7 @@ class GameFactory:
         collector = Collector(columns)
         for i in range(self.num_p):
             strategy_a = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)
+
             p1 = Player(strategy=strategy_a, name='P' + str(i*2 + 1), cltr=collector)
 
             strategy_b = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)

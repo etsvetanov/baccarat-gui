@@ -3,8 +3,17 @@ from abc import ABCMeta, abstractmethod
 from core import roll
 
 
-class BaseStrategy():
+REGISTRY = {}
+
+def registerStrategy(cls):
+    REGISTRY[cls.__name__] = cls
+    return cls
+
+
+class BaseStrategy:
     __metaclass__ = ABCMeta
+
+
 
     @abstractmethod
     def get_bet_choice(self):
@@ -15,6 +24,8 @@ class BaseStrategy():
         """ returns bet size """
 
 
+# noinspection PyMethodOverriding
+@registerStrategy
 class SingleStrategy(BaseStrategy):
     def __init__(self, coefficient=1, base=2):
         base_row = [1, 1, 1, 2, 2, 4, 6, 10, 16, 26]
@@ -96,6 +107,7 @@ class SingleStrategy(BaseStrategy):
         return choice
 
 
+@registerStrategy
 class PairStrategy(SingleStrategy):
     def __init__(self, coefficient=1, base=2):
         SingleStrategy.__init__(self, coefficient, base)
@@ -144,7 +156,8 @@ class PairStrategy(SingleStrategy):
 
     def update_level(self, increase=False):
         """
-        go to a higher level if you loose the last bet in the row
+        go to a higher level if you loose the last
+         bet in the row
         or go to level 0 if you win back the cumulative amount lost
         :param increase: player level is increased when True
         """
@@ -177,6 +190,7 @@ class PairStrategy(SingleStrategy):
         assert 0 <= self.i < len(self.row)
 
 
+@registerStrategy
 class OverseerStrategy(BaseStrategy):
     """
     This strategy is ment to be used on the Overseer class

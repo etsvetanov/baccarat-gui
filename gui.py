@@ -70,59 +70,55 @@ class MainWindow(QWidget):
         self.columns = None
         self.initUI()
 
+
+    @staticmethod
+    def create_generic_button_box(name, callback=None, add_label=True, label_name=''):
+        """
+        :param name: Button name
+        :param callback: Slot to connect to "clicked" signal
+        :param add_label: If True a label will be added to the layout
+        :param label_name: Will be used as the label name, default is empty string
+        :return: generated layout and button references
+        """
+        lbl = None
+        btn = BigButton(name)
+        if callback is not None:
+            btn.clicked.connect(callback)
+
+        if add_label is True:
+            lbl = QLabel(label_name)
+
+        layout = QVBoxLayout()
+        if lbl is not None:
+            layout.addWidget(lbl)
+
+        layout.addWidget(btn)
+
+        return layout, btn
+
     def settingsUI(self):
         """this function creates the initial settings UI"""
 
-        self.options_btn = BigButton('Options')
-        self.options_btn.clicked.connect(self.options)
-        self.options_btn.setMinimumWidth(100)
-        self.options_btn.setMinimumHeight(50)
-        options_lbl = QLabel('')
-        # -----------------------------------
-        self.begin_btn = QPushButton('Begin')
-        self.begin_btn.clicked.connect(self.begin)
-        self.begin_btn.setMinimumWidth(100)
-        self.begin_btn.setMinimumHeight(50)
-        begin_lbl = QLabel('')
-        # -----------------------------------
-        self.sim_btn = QPushButton('Simulate')
-        self.sim_btn.clicked.connect(self.simulate)
-        self.sim_btn.setMinimumWidth(100)
-        self.sim_btn.setMinimumHeight(50)
-        sim_lbl = QLabel('')
-
-
-
-        options_box = QVBoxLayout()
-        options_box.addWidget(options_lbl)
-        options_box.addWidget(self.options_btn)
-
-        begin_box = QVBoxLayout()
-        begin_box.addWidget(begin_lbl)
-        begin_box.addWidget(self.begin_btn)
-
-        siim_btn_box = QVBoxLayout()
-        siim_btn_box.addWidget(sim_lbl)
-        siim_btn_box.addWidget(self.sim_btn)
+        options_box, self.options_btn = self.create_generic_button_box('Options', self.options)
+        begin_box, self.begin_btn = self.create_generic_button_box('Begin', self.begin)
+        sim_box, self.sim_btn = self.create_generic_button_box('Simulate', self.simulate)
 
         self.settings_layout = QHBoxLayout()
         self.settings_layout.addLayout(options_box)
         self.settings_layout.addLayout(begin_box)
-        self.settings_layout.addLayout(siim_btn_box)
+        self.settings_layout.addLayout(sim_box)
         self.settings_layout.addLayout(self.preview_box)
         self.settings_layout.addStretch(1)
 
     def playUI(self):
-        self.player_btn = QPushButton("Player")
-        self.bank_btn = QPushButton("Bank")
-        self.calc_btn = QPushButton("Calculate")
+        self.player_btn = BigButton("Player")
+        self.bank_btn = BigButton("Bank")
+        self.calc_btn = BigButton("Calculate")
         self.player_btn.clicked.connect(self.choice_button_clicked)
         self.bank_btn.clicked.connect(self.choice_button_clicked)
         self.calc_btn.clicked.connect(self.calculate)
 
         for btn in [self.player_btn, self.bank_btn, self.calc_btn]:
-            btn.setMinimumWidth(100)
-            btn.setMinimumHeight(70)
             btn.setDisabled(True)
 
         self.display_lbl = QLabel('  $0')
@@ -239,10 +235,8 @@ class MainWindow(QWidget):
         round_num_box.addWidget(self.round_num)
         # ------
         go_lbl = QLabel('')
-        self.go_btn = QPushButton('Go')
+        self.go_btn = BigButton('Go')
         self.go_btn.clicked.connect(self.go)
-        self.go_btn.setMinimumWidth(100)
-        self.go_btn.setMinimumHeight(50)
         go_box = QVBoxLayout()
         go_box.addWidget(go_lbl)
         go_box.addWidget(self.go_btn)
@@ -350,6 +344,7 @@ class OptionsDialog(QDialog):
         self.p_num = None
         self.mplier = None
         self.preview_box = None
+        self.strategy_choice = None
         self.initUI()
 
     def initUI(self):
@@ -447,8 +442,8 @@ class OptionsDialog(QDialog):
         self.strategy_choice.setFont(font)
 
         self.strategy_choice.highlighted[str].connect(self.strategy_selected)
-        self.strategy_choice.insertItem(0, 'SomeStrategy')
-        self.strategy_choice.insertItem(1, 'SomeStrateg2y')
+        for i, strat in enumerate(strategies.REGISTRY):
+            self.strategy_choice.insertItem(i, strat)
 
         strategy_box = QHBoxLayout()
         strategy_box.addWidget(self.strategy_choice)
