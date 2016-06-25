@@ -2,14 +2,13 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QLabel, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QHBoxLayout, QFrame, QDoubleSpinBox,
                              QSpinBox, QGridLayout, QProgressBar, qApp, QCheckBox,
-                             QDialog, QComboBox, QStyledItemDelegate)
+                             QDialog, QComboBox)
 
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QFont
 from factory import GameFactory
 from data_visualization import SpreadSheet
 import strategies
-import inspect
 import pyqtgraph as pg
 
 COLUMNS = 'columns'
@@ -110,6 +109,8 @@ class MainWindow(QWidget):
         self.settings_layout.addLayout(self.preview_box)
         self.settings_layout.addStretch(1)
 
+
+
     def playUI(self):
         self.player_btn = BigButton("Player")
         self.bank_btn = BigButton("Bank")
@@ -154,6 +155,16 @@ class MainWindow(QWidget):
 
         self.play_layout = QVBoxLayout()
         self.play_layout.addLayout(btn_box)
+        self.play_layout.addStretch(1)
+
+    # noinspection PyAttributeOutsideInit
+    def playUI2(self):
+        self.p1_win_btn = self.create_generic_button_box('P1 Win', callback=None, add_label=False)
+        self.p2_win_btn = self.create_generic_button_box('P2 Win', callback=None, add_label=False)
+
+        self.play_layout = QVBoxLayout()
+        self.play_layout.addWidget(self.win_btn)
+        self.play_layout.addWidget(self.lose_btn)
         self.play_layout.addStretch(1)
 
     def init_options(self):
@@ -345,6 +356,7 @@ class OptionsDialog(QDialog):
         self.mplier = None
         self.preview_box = None
         self.strategy_choice = None
+        self.strategy_lbl = None
         self.initUI()
 
     def initUI(self):
@@ -434,9 +446,9 @@ class OptionsDialog(QDialog):
         setattr(self.main, target, int(value))
 
     def create_box_strategy(self):
-        ls = [m[0] for m in inspect.getmembers(strategies, inspect.isclass)]  # if m[1].__module__ == 'strategies']
-
         self.strategy_choice = QComboBox()
+        self.strategy_choice.setFixedWidth(250)
+
         font = QFont()
         font.setPointSize(font.pointSize() + 10)
         self.strategy_choice.setFont(font)
@@ -445,14 +457,20 @@ class OptionsDialog(QDialog):
         for i, strat in enumerate(strategies.REGISTRY):
             self.strategy_choice.insertItem(i, strat)
 
+        self.strategy_lbl = QLabel()
+        self.strategy_lbl.setWordWrap(True)
+        self.strategy_lbl.setFixedHeight(100)
+
         strategy_box = QHBoxLayout()
         strategy_box.addWidget(self.strategy_choice)
+        strategy_box.addWidget(self.strategy_lbl)
         strategy_box.addStretch(1)
         return strategy_box
 
     def strategy_selected(self, strategy):
-        print(strategy)
-        pass
+        description = strategies.REGISTRY[strategy].get_description()
+
+        self.strategy_lbl.setText(description)
 
     def create_box_columns_options(self):
 

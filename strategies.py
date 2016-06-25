@@ -13,7 +13,10 @@ def registerStrategy(cls):
 class BaseStrategy:
     __metaclass__ = ABCMeta
 
-
+    @staticmethod
+    @abstractmethod
+    def get_description():
+        """returns the strategy description"""
 
     @abstractmethod
     def get_bet_choice(self):
@@ -38,6 +41,13 @@ class SingleStrategy(BaseStrategy):
         self.level_target = 0  # drop to lower level after this gets to (sum(self.row) * level ) / 2
         self.last_index = 0
         self.base = base
+
+    @staticmethod
+    def get_description():
+        description = ("A strategy consisting of a single player. The player bets randomly "
+        "on bank or player. The bet ammount follows the betting steps.")
+
+        return description
 
     def update(self, outcome, reward=None):
         self.outcome = outcome
@@ -107,12 +117,21 @@ class SingleStrategy(BaseStrategy):
         return choice
 
 
+# noinspection PyMethodOverriding
 @registerStrategy
 class PairStrategy(SingleStrategy):
     def __init__(self, coefficient=1, base=2):
         SingleStrategy.__init__(self, coefficient, base)
         self.lead = False
         self.pair = None
+
+    @staticmethod
+    def get_description():
+        description = ("A strategy that consists of two players each betting amount "
+        "that follows the betting steps. One of the players bets randomly on bank or player "
+        "and the other one always bets the opposite.")
+
+        return description
 
     def set_pair(self, pair):
         self.pair = pair
@@ -190,6 +209,7 @@ class PairStrategy(SingleStrategy):
         assert 0 <= self.i < len(self.row)
 
 
+# noinspection PyMethodOverriding
 @registerStrategy
 class OverseerStrategy(BaseStrategy):
     """
@@ -204,6 +224,16 @@ class OverseerStrategy(BaseStrategy):
         # self.last_index = '-'
         # self.level = '-'
 
+    @staticmethod
+    def get_description():
+        description = ("Strategy with multiple \"virtual\" players and a single \"real\" player "
+        "All the \"virtual\" players are in pairs (each pair uses the PairStrategy). The betting "
+        "in the game is done only by the real player - bank or player bet is chosen by the larger "
+        "sum of all \"virtual\" players that bet on bank or player. The difference between the sums "
+        "is the bet amount.")
+
+        return description
+
     def calculate(self):
         minion_bets = {'player': 0, 'bank': 0}
         for minion in self.minions:
@@ -217,26 +247,72 @@ class OverseerStrategy(BaseStrategy):
         else:
             self.bet_size, self.bet_choice = 0, 'tie'
 
+        # these are to prevent bugs where 'player' or 'bank' choice is calculated
+        # but the bet_size is 0 (if it's 0 it must be a 'tie')
         if self.bet_choice == 'player' and self.bet_size == 0:
             raise NameError('lol this is name error, sure')
 
         if self.bet_choice == 'bank' and self.bet_size == 0:
             raise NameError('another name error, trolol')
 
+
     def get_bet_choice(self):
         if self.calculated:
             self.calculated = False
-            return self.bet_choice
         else:
             self.calculate()
             self.calculated = True
-            return self.bet_choice
+
+        return self.bet_choice
+
 
     def get_bet_size(self):
         if self.calculated:
             self.calculated = False
-            return self.bet_choice, self.bet_size
         else:
             self.calculate()
             self.calculated = True
-            return round(self.bet_size, 1)
+
+        return round(self.bet_size, 1)
+
+
+@registerStrategy
+class OverseerStrategy2(BaseStrategy):
+    def __init__(self, minions=None, starting_choice="Bank"):
+        self.minions = minions
+        self.bet_size = 0
+        self.bet_choice = starting_choice
+
+
+    @staticmethod
+    def get_description():
+        description = ("A strategy with many virtual players (minions) and a real (overseer) player."
+                       "The overseer bet_size is the difference of the minions' 'bank'/'player' bet sums."
+                       "The overseer bet_choice follows the pattern XY XY XY ... where X is the starting_choice:"
+                       "either Bank or Player")
+
+        return description
+
+    def get_bet_size(self):
+        minion_bets = {'player': 0, 'bank': 0}
+        for minion in self.minions:
+            minion_bets[minion.bet_choice] = round(minion_bets[minion.bet_choice] + minion.bet_size, 2)
+
+        if minion_bets['player'] > minion_bets['bank']:
+            self.bet_size = minion_bets['player'] - minion_bets['bank']
+        elif minion_bets['bank'] > minion_bets['player']:
+            self.bet_size = minion_bets['bank'] - minion_bets['player']
+        else:
+            self.bet_size = 0
+
+    def get_bet_choice(self):
+        if self.bet_size == 0:
+            current_choice = "Tie"
+        elif self.bet_choice == "Bank":
+            current_choice = self.bet_choice
+            self.bet_choice = "Player"
+        else:
+            current_choice = self.bet_choice
+            self.bet_choice = "Bank"
+
+        return current_choice

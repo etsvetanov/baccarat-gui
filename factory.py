@@ -1,6 +1,7 @@
 from core import *
 from data_visualization import *
 from strategies import PairStrategy, OverseerStrategy
+from abc import ABCMeta, abstractmethod
 
 
 class GameFactory:
@@ -31,3 +32,12 @@ class GameFactory:
         tbl = Game(cltr=collector, gamblers=players + [overseer], max_rounds=100000)
 
         return collector, tbl  # tbl is a game table (as in where players sit), i.e. the game object
+
+
+# class AbstractGameFactory:
+#     def __init__(self, nump_p, multiplier, starting_bet):
+#         pass
+#
+#     def create(self, columns):
+#         pass
+

@@ -10,7 +10,7 @@ def roll():
         return 'bank'
 
 
-class Game():
+class Game:
     def __init__(self, gamblers, cltr=None, max_rounds=1000):
         self.max_rounds = max_rounds
         self.round = 0
@@ -30,7 +30,7 @@ class Game():
         # THIS WILL NOT WORK!
         self.outcome = None
         self.gamblers.append(gambler)
-        self.run()
+
 
     def remove(self, gambler):
         self.gamblers.remove(gambler)
