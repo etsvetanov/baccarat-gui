@@ -305,6 +305,8 @@ class OverseerStrategy2(BaseStrategy):
         else:
             self.bet_size = 0
 
+        return self.bet_size
+
     def get_bet_choice(self):
         if self.bet_size == 0:
             current_choice = "Tie"

@@ -1,6 +1,6 @@
 from core import *
 from data_visualization import *
-from strategies import PairStrategy, OverseerStrategy
+from strategies import PairStrategy, OverseerStrategy, OverseerStrategy2
 from abc import ABCMeta, abstractmethod
 
 
@@ -12,7 +12,8 @@ class GameFactory:
 
     def create(self, columns):
         players = []
-        collector = Collector(columns)
+        # collector = Collector(columns)
+        collector = None
         for i in range(self.num_p):
             strategy_a = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)
 
@@ -26,10 +27,12 @@ class GameFactory:
             players.append(p1)
             players.append(p2)
 
-        overseer_strat = OverseerStrategy(minions=players)
-        overseer = Overseer(strategy=overseer_strat, name='RealPlayer', cltr=collector)
+        overseer_strat1 = OverseerStrategy2(minions=players[:int(len(players)/2)], starting_choice="Player")
+        overseer_strat2 = OverseerStrategy2(minions=players[int(len(players)/2):], starting_choice="Bank")
+        overseer1 = Overseer(strategy=overseer_strat1, name='RP1', cltr=collector)
+        overseer2 = Overseer(strategy=overseer_strat2, name='RP2', cltr=collector)
 
-        tbl = Game(cltr=collector, gamblers=players + [overseer], max_rounds=100000)
+        tbl = Game(cltr=collector, gamblers=players + [overseer1, overseer2], max_rounds=100000)
 
         return collector, tbl  # tbl is a game table (as in where players sit), i.e. the game object
 

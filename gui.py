@@ -315,14 +315,17 @@ class MainWindow(QWidget):
         self.calc_btn.setDisabled(False)
         sender = self.sender()
         self.game.set_outcome(sender.text().lower())
-        self.populate_table()
+
+        if self.game.cltr:
+            self.populate_table()
 
     def calculate(self):
         self.player_btn.setDisabled(False)
         self.bank_btn.setDisabled(False)
         self.calc_btn.setDisabled(True)
         self.game.deal()
-        self.populate_table()
+        if self.game.cltr:
+            self.populate_table()
         p = self.game.gamblers[-1]
         self.display_lbl.setText('  $' + str(p.bet_size) + ' on ' + p.bet_choice.upper())
 

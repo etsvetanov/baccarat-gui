@@ -142,7 +142,8 @@ class BasePlayer:
         assert self.bet_size is not None
         assert self.bet_choice is not None
 
-        self.submit_data(pre_result=True)
+        if self.cltr:
+            self.submit_data(pre_result=True)
         self.bet(self.bet_size)
 
 
