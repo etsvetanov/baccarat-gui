@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
                              QSpinBox, QGridLayout, QProgressBar, qApp, QCheckBox,
                              QDialog, QComboBox)
 
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtCore import pyqtSlot, Qt, QSettings
 from PyQt5.QtGui import QFont
 from factory import GameFactory
 from data_visualization import SpreadSheet
@@ -12,6 +12,7 @@ import strategies
 import pyqtgraph as pg
 
 COLUMNS = 'columns'
+
 
 
 class BigButton(QPushButton):
@@ -43,6 +44,9 @@ class MainWindow(QWidget):
 
         self.options_dic = {}
 
+
+        self.settings = QSettings("Baccarat", "BaccaratGUI")
+
         self.game = None
         self.display_lbl = None
         self.tbl = None
@@ -52,9 +56,9 @@ class MainWindow(QWidget):
         self.play_layout = None
         self.settings_layout = None
         self.layout = None
-        self.starting_bet = 0.01
-        self.p_num = 1
-        self.mplier = 2
+        self.starting_bet = float(self.settings.value("settings/starting_bet", 1))
+        self.p_num = int(self.settings.value("settings/p_num", 100))
+        self.mplier = int(self.settings.value("settings/mplier", 2))
         self.begin_btn = None
         self.preview_box = None
         self.sim_btn = None
@@ -112,8 +116,8 @@ class MainWindow(QWidget):
 
 
     def playUI(self):
-        self.player_btn = BigButton("Player")
-        self.bank_btn = BigButton("Bank")
+        self.player_btn = BigButton("Win")
+        self.bank_btn = BigButton("Lose")
         self.calc_btn = BigButton("Calculate")
         self.player_btn.clicked.connect(self.choice_button_clicked)
         self.bank_btn.clicked.connect(self.choice_button_clicked)
@@ -171,11 +175,11 @@ class MainWindow(QWidget):
         self.options_dic[COLUMNS] = {}
         self.columns = ['partner', 'play', 'level', 'index', 'bet', 'result', 'target', 'net']
         self.options_dic[COLUMNS]['partner'] = False
-        self.options_dic[COLUMNS]['play'] = False
-        self.options_dic[COLUMNS]['level'] = True
-        self.options_dic[COLUMNS]['index'] = True
-        self.options_dic[COLUMNS]['bet'] = False
-        self.options_dic[COLUMNS]['result'] = False
+        self.options_dic[COLUMNS]['play'] = True
+        self.options_dic[COLUMNS]['level'] = False
+        self.options_dic[COLUMNS]['index'] = False
+        self.options_dic[COLUMNS]['bet'] = True
+        self.options_dic[COLUMNS]['result'] = True
         self.options_dic[COLUMNS]['target'] = True
         self.options_dic[COLUMNS]['net'] = True
 
@@ -211,9 +215,11 @@ class MainWindow(QWidget):
         plot_item.setLabel('left', text='Net')
         plot_item.setLabel('bottom', text='Round')
         xVals = [i for i in range(1, n + 1)]
-        yVals = [round[7] for round in self.collector.player_data['RealPlayer']]
+        yVals = [round[7] for round in self.collector.player_data['RP1']]
+        yVals2 = [round[7] for round in self.collector.player_data['RP2']]
 
         plot_item.plot(xVals, yVals, pen='r')
+        plot_item.plot(xVals, yVals2, pen='b')
 
     def go(self):
         self.go_btn.setDisabled(True)
@@ -314,7 +320,13 @@ class MainWindow(QWidget):
         self.bank_btn.setDisabled(True)
         self.calc_btn.setDisabled(False)
         sender = self.sender()
-        self.game.set_outcome(sender.text().lower())
+        if sender.text().lower() == 'win':
+            choice = self.game.gamblers[-2].bet_choice
+        else:
+            choice = self.game.gamblers[-1].bet_choice
+
+        self.game.set_outcome(choice.lower())
+        # self.game.set_outcome(sender.text().lower())
 
         if self.game.cltr:
             self.populate_table()
@@ -351,6 +363,8 @@ class OptionsDialog(QDialog):
         # todo: try to replace .main reference with .parent
         super().__init__()
 
+
+
         self.main = main_window
         self.options_dic = main_window.options_dic
         self.layout = None
@@ -366,7 +380,7 @@ class OptionsDialog(QDialog):
         self.layout = QVBoxLayout()
 
         # ---------------------------------------
-        strategy_box = self.create_box_strategy()
+        # strategy_box = self.create_box_strategy()
         box_mplier = self.create_box_mplier()
         box_p_num = self.create_box_p_num()
         box_starting_bet = self.create_box_starting_bet()
@@ -383,7 +397,7 @@ class OptionsDialog(QDialog):
         param_box.insertSpacing(1, 30)
         param_box.addLayout(box_preview)
         # param_box.addStretch(1)
-        self.layout.addLayout(strategy_box)
+        # self.layout.addLayout(strategy_box)
         self.layout.addLayout(param_box)
         # ----------------------------------------
         self.create_box_columns_options()
@@ -403,6 +417,7 @@ class OptionsDialog(QDialog):
         self.starting_bet.setValue(self.main.starting_bet)
         self.starting_bet.setSingleStep(0.1)
         self.starting_bet.valueChanged.connect(self.update_preview)
+        self.starting_bet.valueChanged.connect(lambda: self.update_parameter('starting_bet'))
 
         start_box = QVBoxLayout()
         start_box.addWidget(start_lbl)
@@ -414,7 +429,7 @@ class OptionsDialog(QDialog):
     def create_box_p_num(self):
         p_num_lbl = QLabel('Number of pairs')
         self.p_num = BigDoubleSpinBox()
-        self.p_num.setRange(1, 10)
+        self.p_num.setRange(1, 100)
         self.p_num.setValue(self.main.p_num)
         self.p_num.valueChanged.connect(self.update_preview)
         self.p_num.valueChanged.connect(lambda: self.update_parameter('p_num'))
@@ -446,6 +461,7 @@ class OptionsDialog(QDialog):
 
     def update_parameter(self, target):
         value = self.sender().value()
+        self.main.settings.setValue("settings/" + target, value)
         setattr(self.main, target, int(value))
 
     def create_box_strategy(self):

@@ -46,6 +46,7 @@ class Game:
     def set_outcome(self, outcome=None):
 
         if outcome:
+            assert outcome == 'player' or outcome == 'bank'
             self.outcome = outcome
         else:
             self.outcome = self.roll()

@@ -159,7 +159,7 @@ class PairStrategy(SingleStrategy):
         self.update_index()
         self.is_double()
 
-    def get_bet_size(self):  # res - result
+    def get_bet_size(self):
         level_multiplier = self.base ** (self.level - 1)
 
         if self.double_up:
@@ -224,6 +224,7 @@ class OverseerStrategy(BaseStrategy):
         # self.last_index = '-'
         # self.level = '-'
 
+    # todo: make description a property instead of a function
     @staticmethod
     def get_description():
         description = ("Strategy with multiple \"virtual\" players and a single \"real\" player "
@@ -278,10 +279,11 @@ class OverseerStrategy(BaseStrategy):
 
 @registerStrategy
 class OverseerStrategy2(BaseStrategy):
-    def __init__(self, minions=None, starting_choice="Bank"):
+    def __init__(self, minions=None, starting_choice="bank"):
         self.minions = minions
         self.bet_size = 0
         self.bet_choice = starting_choice
+
 
 
     @staticmethod
@@ -308,13 +310,16 @@ class OverseerStrategy2(BaseStrategy):
         return self.bet_size
 
     def get_bet_choice(self):
-        if self.bet_size == 0:
-            current_choice = "Tie"
-        elif self.bet_choice == "Bank":
-            current_choice = self.bet_choice
-            self.bet_choice = "Player"
-        else:
-            current_choice = self.bet_choice
-            self.bet_choice = "Bank"
+        current_choice = self.bet_choice
+
+        if self.bet_choice == 'bank':
+            self.bet_choice = 'player'
+        elif self.bet_choice == 'player':
+            self.bet_choice = 'bank'
+
+        # TODO: this is removed because the bet_choice cannot be determined if it's a TIE,
+        # TODO: and a 'WIN' button wouldn't know what to set the outcome to
+        # if self.bet_size == 0:
+        #     return 'Tie'
 
         return current_choice

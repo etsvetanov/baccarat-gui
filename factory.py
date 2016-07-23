@@ -12,9 +12,9 @@ class GameFactory:
 
     def create(self, columns):
         players = []
-        # collector = Collector(columns)
-        collector = None
-        for i in range(self.num_p):
+        collector = Collector(columns)
+        # collector = None
+        for i in range(self.num_p * 2):
             strategy_a = PairStrategy(coefficient=self.starting_bet, base=self.multiplier)
 
             p1 = Player(strategy=strategy_a, name='P' + str(i*2 + 1), cltr=collector)
@@ -27,8 +27,8 @@ class GameFactory:
             players.append(p1)
             players.append(p2)
 
-        overseer_strat1 = OverseerStrategy2(minions=players[:int(len(players)/2)], starting_choice="Player")
-        overseer_strat2 = OverseerStrategy2(minions=players[int(len(players)/2):], starting_choice="Bank")
+        overseer_strat1 = OverseerStrategy2(minions=players[:int(len(players)/2)], starting_choice="player")
+        overseer_strat2 = OverseerStrategy2(minions=players[int(len(players)/2):], starting_choice="bank")
         overseer1 = Overseer(strategy=overseer_strat1, name='RP1', cltr=collector)
         overseer2 = Overseer(strategy=overseer_strat2, name='RP2', cltr=collector)
 
